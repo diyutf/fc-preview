@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>导航：今天 feed + 领域</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;background:#e9edf2;overflow-x:hidden}
+  body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Noto Sans CJK SC",sans-serif;color:#1a2230}
+  .phone{max-width:420px;margin:0 auto;background:#f6f8fb;overflow-x:hidden;padding-bottom:8px}
+  .top{padding:16px 18px 14px;background:linear-gradient(160deg,#3b6fb0,#5b93d6);color:#fff;border-radius:0 0 22px 22px}
+  .top h1{margin:0 0 3px;font-size:23px}
+  .top .sub{font-size:12.5px;opacity:.9}
+  .search{margin:12px 16px 0;background:#fff;border-radius:12px;padding:11px 14px;color:#9aa4b4;font-size:13.5px;display:flex;gap:8px;align-items:center;box-shadow:0 4px 14px rgba(40,60,90,.05)}
+  main{padding:14px 16px 0}
+  .ghead{font-size:12px;color:#8792a4;font-weight:700;margin:14px 2px 8px;letter-spacing:.03em}
+  .card{background:#fff;border-radius:16px;box-shadow:0 5px 18px rgba(40,60,90,.05);overflow:hidden}
+  /* feed item */
+  .item{display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:1px solid #f0f3f7}
+  .item:last-child{border-bottom:0}
+  .item .time{min-width:52px;text-align:center;font-size:13px;font-weight:700;color:#33455f;line-height:1.2}
+  .item .time small{display:block;font-size:10px;color:#9aa4b4;font-weight:600}
+  .item .body{flex:1}
+  .item .name{font-size:15px;font-weight:600}
+  .item .sub{font-size:12px;color:#8792a4;margin-top:2px}
+  .item .mini{border:0;border-radius:10px;padding:8px 13px;font-size:12.5px;font-weight:700;color:#fff;background:#3b6fb0}
+  .item.done{opacity:.62}
+  .item.done .name{text-decoration:line-through;text-decoration-color:#c9d3e0}
+  .item.over .time{color:#c0392b}
+  .dtag{font-size:10.5px;padding:1px 7px;border-radius:20px;margin-left:6px;font-weight:600;vertical-align:middle}
+  .d-baby{background:#fbe6ef;color:#c04f83}.d-home{background:#e2f5ec;color:#268a63}.d-fin{background:#e5eefb;color:#356fc0}.d-grow{background:#efe9fd;color:#7a52c9}.d-diary{background:#f8efdd;color:#a1791f}
+  .chk{width:26px;height:26px;border-radius:50%;background:#e7f6ee;color:#2f855a;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700}
+  .over-badge{background:#fdece9;color:#c0392b;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:20px;margin-left:6px}
+  /* domains */
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 4px}
+  .chip{background:#fff;border:1px solid #e6ebf2;border-radius:20px;padding:7px 13px;font-size:13px;font-weight:600;color:#44506b;box-shadow:0 3px 10px rgba(40,60,90,.04)}
+  .dom{display:flex;align-items:center;gap:13px;padding:15px 14px;border-bottom:1px solid #f0f3f7}
+  .dom:last-child{border-bottom:0}
+  .dom .ic{width:42px;height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;flex:none}
+  .dom .n{flex:1}.dom .n b{font-size:15.5px;font-weight:700}.dom .n div{font-size:12px;color:#8792a4;margin-top:2px}
+  .dom .cnt{font-size:13px;color:#9aa4b4;font-weight:700}
+  .dom .chev{color:#c3cede;font-size:18px;margin-left:4px}
+  .sublist{background:#fbfcfe;border-top:1px solid #eef2f7}
+  .subitem{display:flex;align-items:center;gap:10px;padding:11px 14px 11px 20px;border-bottom:1px solid #f2f5f9;font-size:14px}
+  .subitem:last-child{border-bottom:0}
+  .subitem .mode{font-size:10.5px;color:#8792a4;background:#eef1f6;padding:1px 7px;border-radius:20px;margin-left:auto}
+  .expanded{box-shadow:0 6px 20px rgba(40,60,90,.09)}
+  .tabs{display:flex;background:#fff;border-top:1px solid #eef0f4;padding:10px 0 14px;margin-top:16px}
+  .tab{flex:1;text-align:center;font-size:11px;color:#9aa4b4}
+  .tab.on{color:#3b6fb0;font-weight:700}
+  .tab .ic{font-size:19px;display:block;margin-bottom:2px}
+  .note{text-align:center;font-size:11.5px;color:#94a0b2;margin:14px 14px 0;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="phone" id="app"></div>
+<script>
+var view=(location.search.match(/view=(\w+)/)||[])[1]||'today';
+
+var DOM={ baby:{n:'宝宝',c:'#d9608c',ic:'🍼',cls:'d-baby'}, home:{n:'家庭生活',c:'#2f9e77',ic:'🏡',cls:'d-home'},
+  fin:{n:'财务',c:'#3b7dd8',ic:'💳',cls:'d-fin'}, grow:{n:'成长与规划',c:'#7a52c9',ic:'🚀',cls:'d-grow'}, diary:{n:'日记与反思',c:'#b7791f',ic:'📓',cls:'d-diary'} };
+
+// 今天 feed（跨所有事务，按时间混排）
+var FEED=[
+  {g:'该处理了',items:[
+    {time:'现在',t:'喂奶',dom:'baby',sub:'于棣值班 · 已到点',act:'打卡'},
+    {time:'20:00',sm:'昨晚',t:'喂奶',dom:'baby',sub:'漏打卡 · 已提醒于棣',over:true,act:'补录'} ]},
+  {g:'今天晚些',items:[
+    {time:'12:30',t:'遛狗',dom:'home',sub:'Tina · 灰灰',act:'打卡'},
+    {time:'14:00',t:'喂奶',dom:'baby',sub:'于棣值班'},
+    {time:'18:30',t:'遛狗',dom:'home',sub:'于棣 · 灰灰'},
+    {time:'21:00',t:'睡前护肤',dom:'grow',sub:'Tina'} ]},
+  {g:'已完成',items:[
+    {time:'07:30',t:'遛狗',dom:'home',sub:'Tina · 河边 35 分钟',done:true},
+    {time:'08:00',t:'喂猫',dom:'home',sub:'于棣',done:true} ]},
+  {g:'本周 / 稍后',items:[
+    {time:'明天',t:'水电费到期',dom:'fin',sub:'$180 · 记得付'},
+    {time:'3 天后',t:'HVAC 滤芯保养',dom:'home',sub:'每季度 · 录入费用/照片'},
+    {time:'5 天后',t:'产检',dom:'baby',sub:'预约 Dr. Lin 10:30'},
+    {time:'周日',t:'每周复盘',dom:'diary',sub:'AI 帮你总结这周'} ]}
+];
+
+// 领域 → 事务
+var DOMLIST=[
+  {k:'baby', sub:'孕育 · 育儿 · 成长', n:4, items:[['喂奶','轮值打卡'],['产检 / 用药提醒','周期提醒'],['疫苗计划','计划里程碑'],['孕育知识库','知识']]},
+  {k:'home', sub:'房子 · 宠物 · 家务 · 旅行', n:6, items:[['遛狗','轮值打卡'],['喂猫','轮值打卡'],['房屋保养(HVAC)','周期+录入'],['垃圾清运','周期提醒'],['水电费','周期提醒'],['家庭旅行计划','计划']], expand:true},
+  {k:'fin', sub:'账务 · 预算 · 税务 · 资产', n:5, items:[]},
+  {k:'grow', sub:'学习 · 兴趣 · 事业 · 长期规划', n:5, items:[]},
+  {k:'diary', sub:'日记 · 总结 · 反思', n:2, items:[]}
+];
+
+function renderToday(){
+  var h='<div class="top"><h1>今天 · 周日 7/26</h1><div class="sub">跨所有事务，按时间排好了——不用你去找</div></div>';
+  h+='<div class="search">🔍 搜索任何事务、记录、知识…</div><main>';
+  FEED.forEach(function(sec){
+    h+='<div class="ghead">'+sec.g+'</div><div class="card">';
+    sec.items.forEach(function(it){ var d=DOM[it.dom];
+      h+='<div class="item'+(it.done?' done':'')+(it.over?' over':'')+'">'+
+         '<div class="time">'+it.time+(it.sm?'<small>'+it.sm+'</small>':'')+'</div>'+
+         '<div class="body"><div class="name">'+it.t+' <span class="dtag '+d.cls+'">'+d.n+'</span>'+(it.over?'<span class="over-badge">漏</span>':'')+'</div><div class="sub">'+it.sub+'</div></div>'+
+         (it.done?'<div class="chk">✓</div>':(it.act?'<button class="mini" style="background:'+d.c+'">'+it.act+'</button>':''))+
+         '</div>';
+    });
+    h+='</div>';
+  });
+  h+='<div class="note">💡 主入口是「今天」——所有该做的按时间汇总在一起，<b>你根本不用先找是哪个事务</b>。小圆标只是告诉你它属于哪个领域。</div></main>';
+  h+=tabs('today');
+  return h;
+}
+
+function renderDomains(){
+  var h='<div class="top"><h1>领域</h1><div class="sub">要找 / 管某类事务时，从这里进——一个领域就几件，不挤</div></div>';
+  h+='<div class="search">🔍 搜索所有事务（如"遛狗""保养"直接跳）</div><main>';
+  h+='<div class="ghead">常用 / 最近</div><div class="chips"><span class="chip">🍼 喂奶</span><span class="chip">🐕 遛狗</span><span class="chip">💳 对账</span></div>';
+  h+='<div class="ghead">按领域</div>';
+  DOMLIST.forEach(function(dl){ var d=DOM[dl.k];
+    h+='<div class="card'+(dl.expand?' expanded':'')+'" style="margin-bottom:12px">';
+    h+='<div class="dom"><div class="ic" style="background:'+d.c+'">'+d.ic+'</div><div class="n"><b>'+d.n+'</b><div>'+dl.sub+'</div></div><div class="cnt">'+dl.n+' 件</div><div class="chev">'+(dl.expand?'▾':'›')+'</div></div>';
+    if(dl.expand){ h+='<div class="sublist">';
+      dl.items.forEach(function(it){ h+='<div class="subitem">'+it[0]+'<span class="mode">'+it[1]+'</span></div>'; });
+      h+='</div>'; }
+    h+='</div>';
+  });
+  h+='<div class="note">💡 事务不平铺成一大排——收在 5 个领域里。进一个领域才看到它那几件（图中「家庭生活」展开示例），再多也一屏搞定；找不到就顶部搜。</div></main>';
+  h+=tabs('domains');
+  return h;
+}
+
+function tabs(on){
+  function t(k,ic,lb){ return '<div class="tab'+(on==k?' on':'')+'"><span class="ic">'+ic+'</span>'+lb+'</div>'; }
+  return '<div class="tabs">'+t('today','📆','今天')+t('domains','🗂','领域')+t('log','📋','记录')+t('me','👤','我的')+'</div>';
+}
+
+document.getElementById('app').innerHTML = view=='domains'?renderDomains():renderToday();
+</script>
+</body>
+</html>
