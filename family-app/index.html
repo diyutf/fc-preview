@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#1ba572">
+<title>家庭 AI 中枢</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  :root{--bg:#f7fbf9;--text:#1b2b25;--muted:#8ba398;--card:#fff;--line:#e6efea;--dot:#1ba572;--btn:#1ba572;--btntext:#fff;
+    --glance:#e7f6ef;--glanceb:#149a66;--chipbg:#eef3f0;--chipfg:#6d8579;--shadow:0 2px 8px rgba(30,70,50,.05);--radius:16px;
+    --c3bg:#e4f5ec;--c3:#0f9d63;--c4bg:#e7effe;--c4:#2f6bc4;--c6bg:#f3ecfb;--c6:#8b5cf6;--miss:#fdf3e6;--missf:#b26a12}
+  html,body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Noto Sans CJK SC",sans-serif}
+  #app{max-width:460px;margin:0 auto;min-height:100vh;padding-bottom:80px}
+  .head{padding:22px 20px 16px;background:#fff;border-bottom:1px solid var(--line)}
+  .hi{font-size:22px;font-weight:800;letter-spacing:-.02em}
+  .date{font-size:12.5px;color:var(--muted);margin-top:3px}
+  .glance{margin-top:13px;font-size:12.5px;background:var(--glance);color:var(--glanceb);border-radius:14px;padding:11px 13px;line-height:1.5}
+  .glance b{font-weight:800}
+  main{padding:14px 15px 0}
+  .sec{font-size:12px;font-weight:800;color:var(--muted);margin:15px 3px 9px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:13px 14px;margin-bottom:10px}
+  .item{display:flex;align-items:center;gap:12px}
+  .item .tm{font-size:12px;font-weight:800;width:46px;flex:none;font-variant-numeric:tabular-nums;color:var(--text)}
+  .item .tm.none{color:var(--muted);font-weight:600}
+  .item .bd{flex:1;min-width:0}
+  .ttl{font-size:15px;font-weight:700}
+  .ttl.done{text-decoration:line-through;color:var(--muted)}
+  .meta{font-size:11.5px;color:var(--muted);margin-top:4px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .chip{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:var(--chipbg);color:var(--chipfg)}
+  .chip.c3{background:var(--c3bg);color:var(--c3)}.chip.c4{background:var(--c4bg);color:var(--c4)}.chip.c6{background:var(--c6bg);color:var(--c6)}
+  .chip.dm{background:var(--glance);color:var(--glanceb)}
+  .do{flex:none;font-size:12.5px;font-weight:700;border:0;border-radius:11px;padding:9px 14px;background:var(--btn);color:var(--btntext);box-shadow:0 3px 10px rgba(27,165,114,.25)}
+  .do.ghost{background:var(--chipbg);color:var(--muted);box-shadow:none}
+  .empty{text-align:center;color:var(--muted);font-size:13px;padding:26px 20px;line-height:1.7}
+  /* capture */
+  textarea,input{font-family:inherit;font-size:15px;color:var(--text);width:100%;border:1.5px solid var(--line);border-radius:13px;padding:13px;background:#fbfefc;outline:none}
+  textarea:focus,input:focus{border-color:var(--dot)}
+  .composerow{display:flex;gap:9px;margin-top:11px}
+  .btn{flex:1;border:0;border-radius:13px;padding:13px;font-size:14.5px;font-weight:700;background:var(--btn);color:var(--btntext);box-shadow:0 4px 12px rgba(27,165,114,.26)}
+  .btn.ghost{background:var(--chipbg);color:var(--muted);box-shadow:none;flex:none;padding:13px 16px}
+  .info{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);margin-top:14px;overflow:hidden}
+  .info .echo{background:var(--glance);color:var(--glanceb);padding:10px 13px;font-size:12.5px;font-weight:600}
+  .info .ib{padding:13px 14px}
+  .rawp{font-size:10px;font-weight:700;color:var(--dot);background:var(--glance);border-radius:20px;padding:2px 9px;display:inline-block;margin-bottom:9px}
+  .il{font-size:11px;color:var(--muted);margin:8px 0 5px}
+  .fields{display:flex;gap:6px;flex-wrap:wrap}
+  .fld{background:var(--chipbg);color:var(--chipfg);border-radius:9px;padding:5px 10px;font-size:11.5px;font-weight:600}
+  .fld.miss{background:var(--miss);color:var(--missf)}
+  .acts{display:flex;gap:7px;margin-top:12px}
+  .acts button{flex:1;border:0;border-radius:11px;padding:11px 4px;font-size:12.5px;font-weight:700;background:var(--chipbg);color:var(--muted)}
+  .acts button.pri{background:var(--btn);color:var(--btntext)}
+  .thinking{font-size:12.5px;color:var(--muted);margin-top:12px;text-align:center}
+  /* plan */
+  .ms{position:relative;padding:0 0 15px 24px;border-left:2px solid #e0ebe5;margin-left:8px}
+  .ms:last-child{border-color:transparent}
+  .ms .d{position:absolute;left:-8px;top:2px;width:15px;height:15px;border-radius:50%;background:#fff;border:2px solid #c5d3cb}
+  .ms.done .d,.ms.now .d{background:var(--dot);border-color:var(--dot)}
+  .ms .n{font-size:14.5px;font-weight:700}.ms.todo .n{color:var(--muted)}
+  .ms .m{font-size:11px;color:var(--muted);margin-top:3px}
+  .row2{display:flex;justify-content:space-between;font-size:13px;padding:8px 0;border-bottom:1px solid var(--line)}
+  .row2:last-child{border-bottom:0}.row2 .k{color:var(--muted);font-size:12px}.row2 .v{font-weight:600}
+  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:96px;background:#22302a;color:#fff;padding:11px 16px;border-radius:24px;font-size:13px;font-weight:600;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.2);display:flex;align-items:center;gap:12px;opacity:0;transition:opacity .2s,transform .2s}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+  .toast .u{color:#8fd6b4;font-weight:800}
+  nav{position:fixed;bottom:0;left:0;right:0;max-width:460px;margin:0 auto;display:flex;background:#fff;border-top:1px solid var(--line);padding:8px 0 22px;z-index:40}
+  nav button{flex:1;background:none;border:0;font-size:10px;color:var(--muted);font-weight:600}
+  nav button.on{color:var(--dot);font-weight:800}
+  nav .ic{font-size:20px;display:block;margin-bottom:2px}
+  .fab{position:fixed;bottom:92px;right:calc(50% - 230px + 16px);width:54px;height:54px;border-radius:50%;background:var(--btn);color:#fff;border:0;font-size:26px;box-shadow:0 8px 20px rgba(27,165,114,.4);z-index:45}
+  @media(max-width:492px){.fab{right:16px}}
+</style></head>
+<body><div id="app"></div><div id="toast" class="toast"></div>
+<script>
+// ---------- state ----------
+var KEY='famapp_v0';
+function today(){return '周一 · 7 月 27 日';}
+function load(){try{return JSON.parse(localStorage.getItem(KEY))||seed();}catch(e){return seed();}}
+function save(){localStorage.setItem(KEY,JSON.stringify(DB));}
+function uid(){return 'x'+(DB._n=(DB._n||0)+1)+'_'+(''+Math.abs(Math.sin(DB._n))).slice(2,7);}
+function seed(){return {_n:0,items:[
+  {id:'s1',kind:'checkin',title:'遛狗',domain:'家庭',dm:'c3',time:'07:00',done:false,who:'家人轮流'},
+  {id:'s2',kind:'task',title:'交电费',domain:'生活',dm:'c4',time:'09:00',done:false,who:'待认领'},
+  {id:'s3',kind:'checkin',title:'喝够 8 杯水',domain:'家庭',dm:'c3',time:'20:00',done:false,who:'自己'},
+  {id:'s4',kind:'task',title:'买空气净化器',domain:'家庭',dm:'c4',time:'',done:false,who:'待安排',box:true}
+],
+plans:[{id:'p1',title:'存 3 个月应急金',prog:33,ms:[
+  {n:'定每月存多少',m:'已达成 · 2026-06',s:'done'},
+  {n:'开自动转账',m:'进行中 · 目标 2026-09',s:'now'},
+  {n:'存满第 1 个月',m:'目标 2026-11',s:'todo'},
+  {n:'存满 3 个月',m:'目标 2027 Q1',s:'todo'}
+]}],
+reflections:[{id:'r1',title:'睡前又刷手机太久了',body:'明明困了还刷。下次手机放客厅充电。',n:3}],
+reminders:[]};}
+var DB=load();
+
+// ---------- AI (real if backend, heuristic fallback) ----------
+var AI_ENDPOINT=''; // 上线后填 worker /ai 地址；空则用本地启发式
+function parseInput(text){
+  // 本地启发式（离线也能用）；接上 AI_ENDPOINT 后由真模型替换
+  var t=text||'';
+  var dom='生活',dm='',kind='task';
+  if(/宝宝|胎动|产检|婴儿|喂|奶/.test(t)){dom='宝宝';dm='c3';}
+  else if(/遛狗|喂猫|房|保养|买菜|做饭|家里/.test(t)){dom='家庭';dm='c3';}
+  else if(/钱|预算|账|税|存款|信用卡|\$|美元|元/.test(t)){dom='财务';dm='dm';}
+  else if(/学|回国|签证|课|事业|youtube|视频|护肤|美妆/.test(t)){dom='成长';dm='c4';}
+  else if(/焦虑|难受|反思|情绪|后悔|应该|下次/.test(t)){dom='反思';dm='c6';kind='reflection';}
+  if(/每天|每周|每晚|每月|打卡/.test(t))kind='checkin';
+  var time='';var mt=t.match(/(\d{1,2})\s*[:：点]\s*(\d{0,2})/);if(mt)time=('0'+mt[1]).slice(-2)+':'+((mt[2]||'00')+'00').slice(0,2);
+  else if(/早上|上午/.test(t))time='09:00';else if(/晚上|今晚/.test(t))time='20:00';else if(/下午/.test(t))time='15:00';
+  var title=t.replace(/[，,。.！!？?]/g,' ').trim().slice(0,20)||'新事项';
+  var budget='';var mb=t.match(/(\d+)\s*(元|块|美元|刀|\$)/)||t.match(/\$\s*(\d+)/);if(mb)budget='$'+ (mb[1]);
+  var conf= (time?25:0)+(dm?35:15)+(budget?10:0)+30; if(conf>95)conf=95;
+  return {title:title,domain:dom,dm:dm,kind:kind,time:time,budget:budget,conf:conf,raw:t};
+}
+function aiParse(text,cb){
+  if(!AI_ENDPOINT){setTimeout(function(){cb(parseInput(text));},450);return;}
+  fetch(AI_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text:text})})
+    .then(function(r){return r.json();}).then(function(j){cb(j.result||parseInput(text));})
+    .catch(function(){cb(parseInput(text));});
+}
+
+// ---------- reminders → Telegram (via backend) ----------
+var REMIND_ENDPOINT=''; // 上线后填 worker /remind；空则只本地存
+function pushReminder(item){
+  if(item.time){DB.reminders.push({title:item.title,time:item.time,at:Date.now()});save();
+    if(REMIND_ENDPOINT){fetch(REMIND_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({title:item.title,time:item.time})}).catch(function(){});}
+  }
+}
+
+// ---------- ui ----------
+var view='today';var draft=null;
+function toast(msg,undo){var el=document.getElementById('toast');el.innerHTML=msg+(undo?'<span class="u" id="undo">撤销</span>':'');el.className='toast show';
+  if(undo){document.getElementById('undo').onclick=function(){undo();el.className='toast';render();};}
+  clearTimeout(window._tt);window._tt=setTimeout(function(){el.className='toast';},3200);}
+function chip(d,dm){return '<span class="chip '+(dm||'')+'">'+d+'</span>';}
+
+function todayView(){
+  var todo=DB.items.filter(function(i){return !i.done && !i.box;});
+  var box=DB.items.filter(function(i){return i.box && !i.done;});
+  var done=DB.items.filter(function(i){return i.done;});
+  var h='<div class="head"><div class="hi">晚上好 🌿</div><div class="date">'+today()+' · 多云 22°</div>'+
+    '<div class="glance">今天 <b>'+todo.length+'</b> 件要做 · 待办箱 <b>'+box.length+'</b> 条 · 晚 9:00 <b>复盘</b></div></div><main>';
+  h+='<div class="sec">今天要做</div>';
+  if(!todo.length)h+='<div class="empty">今天空了 🌿<br>点右下 ＋ 记一笔</div>';
+  todo.sort(function(a,b){return (a.time||'zz').localeCompare(b.time||'zz');});
+  todo.forEach(function(i){h+=itemRow(i);});
+  if(box.length){h+='<div class="sec">🗂 待办箱 · 晚上 review 定时间</div>';box.forEach(function(i){h+=itemRow(i);});}
+  if(done.length){h+='<div class="sec">已完成 '+done.length+'</div>';done.forEach(function(i){h+=itemRow(i);});}
+  h+='<div class="sec" style="margin-top:18px">🌙 今晚 9:00 · 每日 review</div>';
+  h+='<div class="card" onclick="go(\'review\')"><div class="item"><div class="bd"><div class="ttl">去复盘</div><div class="meta">'+ (DB.reflections.length) +' 条反思 · 待复盘</div></div><span class="do ghost">开始</span></div></div>';
+  return h+'</main>';
+}
+function itemRow(i){
+  var c=i.kind==='checkin'?'③打卡':i.kind==='reflection'?'⑥反思':'④任务';
+  var cc=i.dm||'';
+  var btn=i.done?'<span class="do ghost">↩︎</span>':'<button class="do" onclick="event.stopPropagation();complete(\''+i.id+'\')">'+(i.kind==='checkin'?'打卡':'完成')+'</button>';
+  return '<div class="card"><div class="item"><div class="tm'+(i.time?'':' none')+'">'+(i.time||'—')+'</div>'+
+    '<div class="bd"><div class="ttl'+(i.done?' done':'')+'">'+i.title+'</div><div class="meta">'+chip(c,cc)+chip(i.domain,'dm')+'<span>'+(i.who||'')+'</span></div></div>'+btn+'</div></div>';
+}
+function complete(id){var i=find(id);if(!i)return;i.done=true;save();render();toast('✓ 已完成：'+i.title,function(){i.done=false;save();});}
+function find(id){for(var k of ['items'])for(var x of DB[k])if(x.id===id)return x;return null;}
+
+function captureView(){
+  var h='<div class="head"><div class="hi">随手记</div><div class="date">说一句 / 打一段 · AI 帮你归位</div></div><main>';
+  h+='<textarea id="cap" rows="3" placeholder="例：明天下午3点带狗看兽医 / 宝宝屋买空气净化器预算200 / 今天又没耐心了"></textarea>';
+  h+='<div class="composerow"><button class="btn" onclick="understand()">🧠 让 AI 理解</button><button class="btn ghost" onclick="quickQ()">问一句</button></div>';
+  h+='<div id="result"></div>';
+  h+='<div class="empty" style="margin-top:20px">🔒 你打的原话第一秒就存了——落地 / 放待办箱 / 走开都丢不了。</div>';
+  return h+'</main>';
+}
+function understand(){
+  var t=(document.getElementById('cap')||{}).value||'';if(!t.trim())return;
+  document.getElementById('result').innerHTML='<div class="thinking">🧠 AI 正在理解…</div>';
+  aiParse(t,function(p){draft=p;renderDraft(p);});
+}
+function renderDraft(p){
+  var kindtxt=p.kind==='checkin'?'③ 循环·打卡':p.kind==='reflection'?'⑥ 反思':'④ 一次性任务';
+  var kc=p.dm||'';
+  var fields='';
+  if(p.time)fields+='<span class="fld">时间 '+p.time+'</span>';else fields+='<span class="fld miss">时间 ？</span>';
+  if(p.budget)fields+='<span class="fld">预算 '+p.budget+'</span>';
+  fields+='<span class="fld miss">负责人 ？</span>';
+  var col=p.conf>=75?'#2f9e77':'#e0a53a';
+  var acts=p.kind==='reflection'
+    ?'<div class="acts"><button class="pri" onclick="landDraft(false)">✓ 存进反思</button><button onclick="clearDraft()">改</button></div>'
+    :'<div class="acts"><button class="pri" onclick="landDraft(false)">✓ 落地</button><button onclick="landDraft(true)">🗂 先放待办箱</button><button onclick="clearDraft()">改</button></div>';
+  document.getElementById('result').innerHTML='<div class="info"><div class="echo">🗣️「'+p.raw+'」</div><div class="ib">'+
+    '<span class="rawp">🔒 原话已存</span>'+
+    '<div class="il">识别为</div>'+chip(kindtxt,kc)+' '+chip(p.domain,'dm')+
+    '<div class="il">关键字段</div><div class="fields">'+fields+'</div>'+
+    '<div class="il">置信度 '+p.conf+'%</div><div style="height:7px;border-radius:5px;background:var(--chipbg);overflow:hidden"><i style="display:block;height:100%;width:'+p.conf+'%;background:'+col+'"></i></div>'+
+    acts+'</div></div>';
+}
+function landDraft(box){
+  if(!draft)return;var p=draft;
+  if(p.kind==='reflection'){DB.reflections.unshift({id:uid(),title:p.title,body:p.raw,n:1});save();toast('🪞 已存进反思');go('me');clearDraft();return;}
+  var it={id:uid(),kind:p.kind,title:p.title,domain:p.domain,dm:p.dm||'c4',time:box?'':p.time,done:false,who:'我',box:!!box,raw:p.raw};
+  DB.items.unshift(it);save();pushReminder(it);
+  toast(box?'🗂 已放待办箱（晚上 review 定时间）':'✓ 已加到今天'+(it.time?'：'+it.time:''),function(){DB.items=DB.items.filter(function(x){return x.id!==it.id;});save();});
+  clearDraft();go('today');
+}
+function clearDraft(){draft=null;var r=document.getElementById('result');if(r)r.innerHTML='';}
+function quickQ(){var t=(document.getElementById('cap')||{}).value||'';document.getElementById('result').innerHTML='<div class="info"><div class="echo">💬 你问：'+(t||'…')+'</div><div class="ib" style="font-size:13px;color:var(--muted);line-height:1.6">（v0：真 AI 接上后这里直接回答、不落库。）本周待办 3 件 · 周四 10:00 有约。</div></div>';}
+
+function reviewView(){
+  var pend=DB.items.filter(function(i){return !i.done;});
+  var h='<div class="head"><div class="hi">今晚复盘</div><div class="date">周一 · 9:00 · 目标 5 分钟</div>'+
+    '<div class="glance"><b>'+pend.length+'</b> 件待收尾 · <b>'+DB.reflections.length+'</b> 条反思</div></div><main>';
+  var boxes=pend.filter(function(i){return i.box;});
+  if(boxes.length){h+='<div class="sec">待办箱 → 定个时间</div>';boxes.forEach(function(i){
+    h+='<div class="card"><div class="ttl">'+i.title+'</div><div class="meta">'+chip(i.domain,'dm')+'白天丢进待办箱</div>'+
+      '<div class="acts" style="margin-top:10px"><button class="pri" onclick="schedule(\''+i.id+'\',\'20:00\')">今晚 20:00</button><button onclick="schedule(\''+i.id+'\',\'09:00\')">明早 9:00</button><button onclick="complete(\''+i.id+'\')">已做完</button></div></div>';});}
+  var timed=pend.filter(function(i){return !i.box;});
+  if(timed.length){h+='<div class="sec">今天没记的</div>';timed.forEach(function(i){
+    h+='<div class="card"><div class="ttl">'+i.title+'</div><div class="meta">'+chip(i.time||'—','')+chip(i.domain,'dm')+'</div>'+
+      '<div class="acts" style="margin-top:10px"><button class="pri" onclick="complete(\''+i.id+'\')">完成</button><button onclick="schedule(\''+i.id+'\',\'09:00\')">改期</button><button onclick="cancelItem(\''+i.id+'\')">取消</button></div></div>';});}
+  h+='<div class="sec">🪞 反思 · 反复到改好</div>';
+  DB.reflections.forEach(function(r){h+='<div class="card"><div class="ttl">'+r.title+'</div><div class="meta">'+chip('⑥反思','c6')+'连 '+(r.n||1)+' 次冒出 · 🔒私密</div>'+
+    '<div class="acts" style="margin-top:10px"><button onclick="toast(\'🔊 开车念（v0 示意）\')">🔊 开车念</button><button class="pri" onclick="fixReflection(\''+r.id+'\')">改好了 · 划掉</button></div></div>';});
+  if(!pend.length&&!DB.reflections.length)h+='<div class="empty">今天都收干净了 🌿</div>';
+  return h+'</main>';
+}
+function schedule(id,t){var i=find(id);if(!i)return;i.time=t;i.box=false;save();pushReminder(i);render();toast('已排到 '+t);}
+function cancelItem(id){var i=find(id);if(!i)return;DB.items=DB.items.filter(function(x){return x.id!==id;});save();render();toast('已取消：'+i.title,function(){DB.items.unshift(i);save();});}
+function fixReflection(id){var r=null;DB.reflections=DB.reflections.filter(function(x){if(x.id===id){r=x;return false;}return true;});save();render();toast('✓ 改好了，已归档',function(){DB.reflections.unshift(r);save();});}
+
+function plansView(){
+  var h='<div class="head"><div class="hi">计划</div><div class="date">长线目标 · 路线图</div></div><main>';
+  DB.plans.forEach(function(p){
+    h+='<div class="sec">🎯 '+p.title+'</div>';
+    h+='<div class="card"><div style="height:8px;border-radius:5px;background:var(--chipbg);overflow:hidden;margin-bottom:6px"><i style="display:block;height:100%;width:'+p.prog+'%;background:var(--btn)"></i></div><div class="meta">里程碑进度 '+p.prog+'%</div></div>';
+    p.ms.forEach(function(m){h+='<div class="ms '+m.s+'"><div class="d"></div><div class="n">'+m.n+'</div><div class="m">'+m.m+'</div></div>';});
+  });
+  return h+'</main>';
+}
+function meView(){
+  var h='<div class="head"><div class="hi">我 · 设置</div><div class="date">v0 本地版 · 数据只在你手机上</div></div><main>';
+  h+='<div class="card"><div class="row2"><span class="k">AI 理解</span><span class="v">'+(AI_ENDPOINT?'✅ 真模型':'本地启发式（v0）')+'</span></div>'+
+     '<div class="row2"><span class="k">提醒推送</span><span class="v">'+(REMIND_ENDPOINT?'✅ Telegram':'本地（待接 Telegram）')+'</span></div>'+
+     '<div class="row2"><span class="k">数据</span><span class="v">存本机 · 不上云</span></div>'+
+     '<div class="row2"><span class="k">版本</span><span class="v">v0 · 家庭 AI 中枢</span></div></div>';
+  h+='<div class="sec">🪞 我的反思（私密）</div>';
+  if(!DB.reflections.length)h+='<div class="empty">还没有反思</div>';
+  DB.reflections.forEach(function(r){h+='<div class="card"><div class="ttl">'+r.title+'</div><div class="meta">🔒 私密 · 复盘中</div></div>';});
+  h+='<div class="card" style="text-align:center;color:var(--muted);font-size:12.5px" onclick="if(confirm(\'清空本机数据、恢复示例？\')){localStorage.removeItem(KEY);location.reload();}">↺ 重置示例数据</div>';
+  return h+'</main>';
+}
+
+var VIEWS={today:todayView,capture:captureView,review:reviewView,plans:plansView,me:meView};
+function go(v){view=v;draft=null;render();window.scrollTo(0,0);}
+function render(){
+  var h=(VIEWS[view]||todayView)();
+  var tabs=[['today','📅','今日'],['plans','🎯','计划'],['review','🌙','复盘'],['me','👤','我']];
+  h+='<nav>'+tabs.map(function(t){return '<button class="'+(view===t[0]?'on':'')+'" onclick="go(\''+t[0]+'\')"><span class="ic">'+t[1]+'</span>'+t[2]+'</button>';}).join('')+'</nav>';
+  h+='<button class="fab" onclick="go(\'capture\')">＋</button>';
+  document.getElementById('app').innerHTML=h;
+}
+render();
+</script></body></html>
