@@ -121,8 +121,10 @@
   nav div{flex:1;text-align:center;font-size:10px;color:var(--muted)}
   nav div.on{color:var(--dot);font-weight:700}
   nav .ic{font-size:19px;display:block;margin-bottom:3px}
-  .toast{position:fixed;bottom:150px;left:50%;transform:translateX(-50%);background:#22302a;color:#fff;font-size:12.5px;font-weight:600;padding:11px 16px;border-radius:12px;z-index:50;display:flex;gap:12px;align-items:center;opacity:0;transition:opacity .2s;max-width:90%}
-  .toast.show{opacity:1}.toast .u{color:#8fd6b4;font-weight:800}
+  .toast{position:fixed;bottom:150px;left:50%;transform:translateX(-50%);background:#22302a;color:#fff;font-size:12.5px;font-weight:600;padding:11px 16px;border-radius:12px;z-index:50;display:flex;gap:12px;align-items:center;opacity:0;transition:opacity .2s;max-width:90%;pointer-events:none}
+  .toast.show{opacity:1;pointer-events:auto}.toast .u{color:#8fd6b4;font-weight:800;pointer-events:auto}
+  /* iOS: 让 div 上的 onclick 能被手指点击（桌面默认就行，iOS 需要 cursor:pointer） */
+  [onclick]{cursor:pointer;touch-action:manipulation}
 </style></head>
 <body><div id="app"></div>
 <button class="fab" onclick="go('capture')">＋</button>
