@@ -183,13 +183,13 @@ function seed(){return {
     {id:'k4',title:'新生儿黄疸观察要点',point:'出生后留意肤色/精神',domain:'baby',important:true,collId:'c2',src:'ChatGPT'}
   ],
   refls:[
-    {id:'f1',text:'晚睡 → 白天情绪差',note:'连着几天 1 点后睡，效率差、情绪也差。',count:3,arch:false},
-    {id:'f2',text:'刷手机冷落 Tina',note:'她累的时候我在刷手机、语气冲。下次先放下手机。',count:2,arch:false},
-    {id:'f3',text:'早起焦虑',note:'',count:0,arch:true}
+    {id:'f1',text:'晚睡 → 白天情绪差',note:'连着几天 1 点后睡，效率差、情绪也差。',count:3,arch:false,author:'于棣'},
+    {id:'f2',text:'刷手机冷落 Tina',note:'她累的时候我在刷手机、语气冲。下次先放下手机。',count:2,arch:false,author:'于棣'},
+    {id:'f3',text:'早起焦虑',note:'',count:0,arch:true,author:'Tina'}
   ],
   jrnls:[
-    {id:'j1',title:'于摆摆第一次胎动',text:'晚上躺着感到轻轻一下，超奇妙。',domain:'baby',date:'7-20'},
-    {id:'j2',title:'缅因周末',text:'海边民宿，狗玩疯了。',domain:'home',date:'7-13'}
+    {id:'j1',title:'于摆摆第一次胎动',text:'晚上躺着感到轻轻一下，超奇妙。',domain:'baby',date:'7-20',author:'Tina'},
+    {id:'j2',title:'缅因周末',text:'海边民宿，狗玩疯了。',domain:'home',date:'7-13',author:'于棣'}
   ],
   captures:[],
   checks:{}  /* routineId+date -> true (今天是否已打卡) */
@@ -238,6 +238,8 @@ function todayScreen(){
   var undone=items.filter(function(x){return !x.done;});
   var h='<div class="head"><div class="hi">'+greet()+'，'+DB.facts.me+' 🌿</div><div class="date">'+todayStr()+' · 多云 22°</div>';
   h+='<div class="glance">今天 <b>'+undone.length+' 件</b>要做 · 待办箱 <b>'+box.length+' 条</b>待定时间 · 晚 9:00 <b>复盘</b></div></div><main>';
+  var need=needItems();
+  if(need.length)h+='<div class="box" style="background:#fff4ec;border:1px solid #f2d9b8" onclick="go(\'inbox\')"><div class="ic">🔔</div><div class="t"><b>需要你处理</b><div>待接受 / 冲突 / 待定时间</div></div><div class="n" style="color:#b26a12">'+need.length+' 项 ›</div></div>';
   h+='<div class="sec">今天要做</div>';
   if(!items.length)h+='<div class="empty">今天没有安排。点右下角 ＋ 随手记一笔。</div>';
   items.forEach(function(x){
@@ -273,6 +275,7 @@ function planHeadsup(){
 var draft=null;
 function captureScreen(){
   var h='<div class="head"><div class="back" onclick="go(\'today\')">‹ 今日</div><div class="hi">随手记</div><div class="date">说一句 / 粘一段 · AI 帮你归位（原话第一秒就存 🔒）</div></div><main>';
+  h+='<div style="display:flex;gap:7px;margin-bottom:11px">'+[['🎙️ 语音','voice'],['⌨️ 文字','text'],['📥 导入对话','sort'],['📷 拍照','photo']].map(function(o){return '<button style="flex:1;padding:9px 2px;border:1px solid var(--line);background:#fff;border-radius:11px;font-size:11.5px;font-weight:700;color:var(--muted)" onclick="capMode(\''+o[1]+'\')">'+o[0]+'</button>';}).join('')+'</div>';
   h+='<div class="compose"><div class="mic">🎙️</div><textarea id="cap" placeholder="「宝宝屋买个空气净化器，预算200」 / 「每天晚上8点提醒我数胎动」 / 「这周宝宝几次产检？」"></textarea></div>';
   h+='<button class="send" onclick="parseCapture()">➤ 让 AI 理解</button>';
   if(draft)h+=infoBox(draft);
@@ -324,7 +327,7 @@ function landDraft(box){
   if(d.kind=='cycle'){
     DB.routines.push({id:uid(),name:d.name,domain:d.domain,icon:DOMAINS[d.domain].icon,risk:'中',schedule:['20:00'],rotation:['Tina'],fields:[{key:'count',label:'数量',type:'num',unit:'',def:1}],source:'① 随手记',records:[]});
   }else if(d.kind=='refl'){
-    DB.refls.unshift({id:uid(),text:d.name,note:d.raw,count:1,arch:false});
+    DB.refls.unshift({id:uid(),text:d.name,note:d.raw,count:1,arch:false,author:DB.facts.me});
   }else{
     DB.items.push({id:uid(),kind:'task',title:d.name,domain:d.domain,time:box?'':'',who:box?'待安排':'',box:!!box,done:false,budget:(d.fields[0]&&d.fields[0].v)||''});
   }
@@ -356,7 +359,7 @@ function openCompleteSheet(reset){var d=draft;if(!d)return;
 function pickCd(el,k,v){cd[k]=v;if(k=='kind'){openCompleteSheet(false);return;}[].forEach.call(el.parentNode.children,function(b){b.className='';});el.className='sel';}
 function landComplete(){var d=draft;var title=cd.title||d.name;var k=cd.kind;
   if(k=='cycle'){var tm=(cd.cadence.match(/\d{1,2}:\d{2}/)||['20:00'])[0];DB.routines.push({id:uid(),name:title,domain:cd.domain,icon:DOMAINS[cd.domain].icon,risk:'中',schedule:[tm],rotation:[cd.who||DB.facts.me],fields:[{key:'note',label:'备注',type:'text'}],source:'① 随手记',records:[]});}
-  else if(k=='refl'){DB.refls.unshift({id:uid(),text:title,note:cd.note||d.raw,count:1,arch:false});}
+  else if(k=='refl'){DB.refls.unshift({id:uid(),text:title,note:cd.note||d.raw,count:1,arch:false,author:DB.facts.me});}
   else{var t=(cd.time||'').match(/\d{1,2}:\d{2}/);DB.items.push({id:uid(),kind:'task',title:title,domain:cd.domain,time:t?t[0]:'',who:cd.who=='待定'?'':(cd.who||''),box:!t,budget:cd.budget||'',done:false,from:'①随手记'});}
   if(DB.captures[0])DB.captures[0].landed=(k=='task'&&!(cd.time||'').match(/\d{1,2}:\d{2}/))?'':'今天';
   draft=null;cd=null;save();closeSheet();toast('✓ 已落地：'+title,function(){});go(k=='refl'?'journal':'today');
@@ -398,6 +401,7 @@ function domainScreen(k){
   var d=DOMAINS[k];
   var h='<div class="head dom" style="background:'+d.color+'"><div class="back" onclick="go(\'domains\')">‹ 领域</div><div class="hi">'+d.icon+' '+d.name+'</div><div class="date">'+d.sub+'</div></div><main>';
   if(k=='fin'){h+='<div class="empty" style="padding:34px 20px">💰 <b>财务领域 = 积木⑦</b><br>按咱们说好的，⑦ 财务整块 v1 先不做（要先定数据安全）。<br>但它不是孤岛——费用/金额已是共享事实、⑤计划能挂金额目标。</div>';return h+'</main>';}
+  if(k=='baby')h+=careBrief();
   var rs=DB.routines.filter(function(r){return r.domain==k;});
   if(rs.length){h+='<div class="sec">③ 周期与轮值</div>';rs.forEach(function(r){h+=routineRow(r);});}
   var its=DB.items.filter(function(i){return i.domain==k;});
@@ -496,6 +500,26 @@ function upgradeToCycle(name,dom){DB.routines.push({id:uid(),name:name,domain:do
 function reflToAction(id){var r=find(DB.refls,id);DB.items.push({id:uid(),kind:'task',title:'改正：'+r.text.slice(0,10),domain:'grow',time:'',who:DB.facts.me,box:true,done:false,from:'⑥反思'});save();toast('→ 已转成 ④改正行动 · 待办箱',function(){});go('review');}
 function applyImpact(){var p=find(DB.plans,'p1');var m=p.ms.filter(function(x){return x.n.indexOf('递交')>=0;})[0];if(m){m.d='目标 2027-03（提前 · 产前备齐）';m.hang='';}DB.facts.dueChanged=null;save();toast('✓ 已用 AI 新排',function(){});render();}
 function clearImpact(){DB.facts.dueChanged=null;save();toast('保留原计划',function(){});render();}
+/* 需要处理 · 权威工作队列 */
+function needItems(){var out=[];DB.items.forEach(function(it){if(it.done)return;if(it.conflict)out.push({t:'冲突待定',it:it,g:"go('task','"+it.id+"')"});else if(it.deleg&&it.who==DB.facts.me)out.push({t:'待你接受',it:it,g:"go('task','"+it.id+"')"});else if(it.box)out.push({t:'待定时间',it:it,g:"go('review')"});});return out;}
+function inboxScreen(){var need=needItems();
+  var h='<div class="head"><div class="back" onclick="go(\'today\')">‹ 今日</div><div class="hi">需要处理</div><div class="date">权威工作队列 · 待接受 / 冲突 / 待定时间 / 待分类</div></div><main>';
+  if(!need.length)h+='<div class="empty">👏 没有待处理的，清爽。</div>';
+  need.forEach(function(n){var it=n.it;h+='<div class="card item" onclick="'+n.g+'"><div class="bd"><div class="ttl">'+it.title+'</div><div class="meta"><span class="chip" style="background:#fdeede;color:#b26a12">'+n.t+'</span>'+chip(it.domain)+'<span>'+(it.who||'')+'</span></div></div><div class="do ghost">›</div></div>';});
+  var boxK=DB.captures.filter(function(c){return false;});
+  h+='<div class="near">🔔 这里是"要干的/要定的"的<b>唯一权威队列</b>——Today 只是聚合冒头，处理都回到源对象。</div>';
+  return h+'</main>';
+}
+function careWeeks(){try{var due=new Date(DB.facts.dueDate);var now=new Date();var days=Math.round((due-now)/86400000);var w=40-Math.ceil(days/7);return Math.max(1,Math.min(42,w));}catch(e){return 32;}}
+function careBrief(){var w=careWeeks();
+  var tips=[{g:'需行动',c:'#b26a12',bg:'#fdeede',t:'每天固定时间数胎动',s:'孕晚期 · 异常及时就医',src:'知识「孕晚期数胎动」'},{g:'提醒',c:'#2f6bc4',bg:'#e7effe',t:'本周四 10:00 产检（三维彩超）',s:'麻省总院 · 空腹先喝水',src:'日历'},{g:'仅了解',c:'#6d8579',bg:'#eef3f0',t:'开始留意新生儿黄疸观察要点',s:'出生后用得上',src:'知识库'}];
+  var h='<div class="card" style="border-left:3px solid '+DOMAINS.baby.color+'"><div style="font-size:13.5px;font-weight:800;color:'+DOMAINS.baby.color+'">🍼 今日照护简报 · 孕 '+w+' 周</div><div class="meta" style="margin:4px 0 6px">按阶段 + 已批准知识生成 · 分级 · 每条标来源</div>';
+  tips.forEach(function(t){h+='<div style="padding:9px 0;border-top:1px solid var(--line)"><span class="chip" style="background:'+t.bg+';color:'+t.c+'">'+t.g+'</span> <b style="font-size:13px">'+t.t+'</b><div class="meta">'+t.s+' · 来源 '+t.src+'</div></div>';});
+  return h+'<div class="meta" style="margin-top:8px">医疗建议标来源+适用范围，需你确认，不自动改用药/检查计划。</div></div>';
+}
+function capMode(m){if(m=='sort')return go('sort');if(m=='photo')return toast('📷 拍照录入（拍收据/物品）· 一键入口 demo',function(){});var el=document.getElementById('cap');if(el)el.focus();}
+function openJournal(id){var j=find(DB.jrnls,id);if(!j)return;openSheet('<h3>'+j.title+'</h3><div class="hint">'+DOMAINS[j.domain].name+' · 作者 '+(j.author||'')+' · 🔒 私密</div><div style="font-size:14px;line-height:1.75;margin-bottom:18px">'+j.text+'</div><button class="fullbtn" onclick="closeSheet()">关闭</button>');}
+function editBaby(){var v=prompt('宝宝小名',DB.facts.baby);if(!v)return;DB.facts.baby=v;save();toast('✓ 已改：'+v,function(){});render();}
 
 /* ============================ 屏幕：⑤ 计划 ============================ */
 function planScreen(id){
@@ -573,17 +597,17 @@ function journalScreen(){
   h+='<div class="sec">🪞 反思 · 反复到改好</div>';
   var act=DB.refls.filter(function(r){return !r.arch;});
   if(!act.length)h+='<div class="empty">没有在复盘的反思。</div>';
-  act.forEach(function(r){h+='<div class="refl"><div class="rt">'+r.text+'</div><div class="rx">'+(r.note||'')+'</div><div class="meta">'+bchip('refl')+'<span>连 '+r.count+' 次冒出</span></div><div class="acts"><button onclick="speak(\''+r.id+'\')">🔊 念</button><button onclick="reflToAction(\''+r.id+'\')">→ 转行动</button><button class="pri" onclick="archRefl(\''+r.id+'\')">改好了·划掉</button></div></div>';});
+  act.forEach(function(r){h+='<div class="refl"><div class="rt">'+r.text+'</div><div class="rx">'+(r.note||'')+'</div><div class="meta">'+bchip('refl')+'<span>作者 '+(r.author||'')+' · 连 '+r.count+' 次冒出</span></div><div class="acts"><button onclick="speak(\''+r.id+'\')">🔊 念</button><button onclick="reflToAction(\''+r.id+'\')">→ 转行动</button><button class="pri" onclick="archRefl(\''+r.id+'\')">改好了·划掉</button></div></div>';});
   var arch=DB.refls.filter(function(r){return r.arch;});
   arch.forEach(function(r){h+='<div class="refl arch"><div class="rt">'+r.text+'</div><div class="meta"><span>✅ 已改好 · 归档 · 不再冒</span></div></div>';});
   h+='<div class="sec">📖 普通日记 · 只存 + 搜</div>';
   h+='<div class="compose" style="padding:10px 13px"><textarea id="jin" placeholder="写一段日记…" style="min-height:38px"></textarea><button class="do" onclick="addJournal()">存</button></div>';
-  DB.jrnls.forEach(function(x){h+='<div class="card"><div class="ttl" style="font-size:13.5px">'+x.title+'</div><div class="meta">'+chip(x.domain)+'<span>'+x.text+'</span><span class="chip">🔒</span></div></div>';});
+  DB.jrnls.forEach(function(x){h+='<div class="card" onclick="openJournal(\''+x.id+'\')"><div class="ttl" style="font-size:13.5px">'+x.title+'</div><div class="meta">'+chip(x.domain)+'<span>作者 '+(x.author||'')+'</span><span class="chip">🔒</span><span class="do ghost" style="margin-left:auto;padding:2px 8px">看 ›</span></div></div>';});
   return h+'</main>';
 }
 function archRefl(id){var r=find(DB.refls,id);r.arch=true;save();toast('✅ 已划掉、归档——不再冒',function(){r.arch=false;save();});render();}
 function speak(id){var r=find(DB.refls,id);try{var u=new SpeechSynthesisUtterance(r.text+'。'+(r.note||''));u.lang='zh-CN';speechSynthesis.speak(u);}catch(e){}toast('🔊 念给你听（hands-free 复盘）',function(){});}
-function addJournal(){var t=(document.getElementById('jin').value||'').trim();if(!t)return;DB.jrnls.unshift({id:uid(),title:t.slice(0,14),text:t,domain:'jrnl',date:'今天'});save();toast('✓ 日记已存',function(){});render();}
+function addJournal(){var t=(document.getElementById('jin').value||'').trim();if(!t)return;DB.jrnls.unshift({id:uid(),title:t.slice(0,14),text:t,domain:'jrnl',date:'今天',author:DB.facts.me});save();toast('✓ 日记已存',function(){});render();}
 
 /* ============================ 屏幕：日历 ============================ */
 function calendarScreen(){
@@ -598,7 +622,7 @@ function calendarScreen(){
   h+='<div class="sec">今天 · '+todayStr()+'</div>';
   var items=todayItems();
   if(!items.length)h+='<div class="empty">今天没有日程。</div>';
-  items.forEach(function(x){var d2=DOMAINS[x.domain];h+='<div class="card item"><div style="width:4px;height:32px;border-radius:3px;background:'+d2.color+';flex:none"></div><div class="bd" style="margin-left:10px"><div class="ttl" style="font-size:14px">'+x.title+'</div><div class="meta">'+(x.rt=='checkin'?bchip('checkin'):bchip('task'))+chip(x.domain)+'</div></div><div class="tm">'+(x.time||'—')+'</div></div>';});
+  items.forEach(function(x){var d2=DOMAINS[x.domain];var tgt=x.rt=='checkin'?"go('cycle','"+x.rid+"')":"go('task','"+x.id+"')";h+='<div class="card item" onclick="'+tgt+'"><div style="width:4px;height:32px;border-radius:3px;background:'+d2.color+';flex:none"></div><div class="bd" style="margin-left:10px"><div class="ttl" style="font-size:14px">'+x.title+'</div><div class="meta">'+(x.rt=='checkin'?bchip('checkin'):bchip('task'))+chip(x.domain)+'</div></div><div class="tm">'+(x.time||'—')+'</div></div>';});
   return h+'</main>';
 }
 
@@ -633,7 +657,7 @@ function meScreen(){
   h+='<div class="near">👤 示例数据是从「于棣」视角种的（他建了几条派给你）。你是 <b>Tina</b> → 首页问候、"谁值班 / 待谁接受" 都按你来；点上面可切成别的成员看他们视角。</div>';
   h+='<div class="sec">共享事实层（改一处，⑤/④ 自动跟着算）</div>';
   h+='<div class="card"><div class="drow"><span class="k">预产期</span><span class="v" onclick="editDue()" style="color:var(--dot);cursor:pointer">'+f.dueDate+' ✎</span></div>'+
-     '<div class="drow"><span class="k">宝宝小名</span><span class="v">'+f.baby+'</span></div></div>';
+     '<div class="drow"><span class="k">宝宝小名</span><span class="v" onclick="editBaby()" style="color:var(--dot);cursor:pointer">'+f.baby+' ✎</span></div></div>';
   h+='<div class="near">🔗 改预产期 → 会传播：⑤「迎接宝宝」目标、相关 ④任务的倒排该动手日都会重算（这就是"共享事实层"）。</div>';
   h+='<div class="sec">数据</div>';
   h+='<div class="card"><div class="ttl" style="font-size:13.5px">全部存在这台手机本地</div><div class="meta"><span>关掉重开都在 · 没上云、无别处备份</span></div><div class="acts"><button onclick="resetAll()">重置为示例数据</button></div></div>';
@@ -652,7 +676,7 @@ var toastTimer;
 function toast(msg,undo){var el=document.getElementById('toast');el.innerHTML=msg+(undo?'<span class="u" onclick="undoAct()">撤销</span>':'');window._undo=undo;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(function(){el.classList.remove('show');},2600);}
 function undoAct(){if(window._undo)window._undo();document.getElementById('toast').classList.remove('show');render();}
 
-var SCREENS={today:todayScreen,capture:captureScreen,review:reviewScreen,domains:domainsScreen,domain:domainScreen,cycle:cycleScreen,task:taskScreen,plan:planScreen,knowledge:knowledgeScreen,coll:collScreen,know:knowScreen,sort:sortScreen,journal:journalScreen,calendar:calendarScreen,search:searchScreen,me:meScreen};
+var SCREENS={today:todayScreen,capture:captureScreen,review:reviewScreen,domains:domainsScreen,domain:domainScreen,cycle:cycleScreen,task:taskScreen,plan:planScreen,knowledge:knowledgeScreen,coll:collScreen,know:knowScreen,sort:sortScreen,journal:journalScreen,calendar:calendarScreen,search:searchScreen,me:meScreen,inbox:inboxScreen};
 var NAVMAP={today:0,calendar:1,domains:2,domain:2,search:3,me:4};
 function render(){
   var fn=SCREENS[state.view]||todayScreen;
