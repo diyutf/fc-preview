@@ -580,13 +580,13 @@ function sortScreen(){
   }
   return h+'</main>';
 }
-function doExtract(){var t=(document.getElementById('imp').value||'').trim();
+function doExtract(){var el=document.getElementById('imp');var t=el?(el.value||'').trim():'';
   window._extracted=[
     {t:'孕晚期每天数胎动',p:'异常及时就医',d:'baby',r:'行动'},
     {t:'三年回国先确认签证类别',p:'决定后续步骤',d:'grow',r:'知识卡'},
     {t:'麻省 529 年底前供款',p:'可抵州税',d:'fin',r:'提醒'}
   ];render();}
-function confirmExtract(){window._extracted.forEach(function(k){
+function confirmExtract(){if(!window._extracted)return;window._extracted.forEach(function(k){
     if(k.r=='行动')DB.items.push({id:uid(),kind:'task',title:k.t.slice(0,14),domain:k.d,box:true,done:false,from:'②知识'});
     else DB.know.push({id:uid(),title:k.t,point:k.p,domain:k.d,important:false,src:'导入'});
   });window._extracted=null;save();toast('✓ 已分拣落地',function(){});go('knowledge');}
