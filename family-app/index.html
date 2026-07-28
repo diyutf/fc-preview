@@ -283,7 +283,7 @@ function captureScreen(){
   if(draft)h+=infoBox(draft);
   // recent raw log
   if(DB.captures.length){h+='<div class="sec">最近丢进来的（原话都在 🔒）</div>';
-    DB.captures.slice(0,5).forEach(function(c){h+='<div class="card"><div class="ttl" style="font-size:13px">'+(c.ask?'💬 ':'📝 ')+c.raw+'</div><div class="meta">'+(c.ask?'当成"问" · 已直接答、不落库':(c.landed?'✅ 已落地 · '+c.landed:'📋 在待办箱'))+'</div></div>';});
+    DB.captures.slice(0,5).forEach(function(c){var tgt=c.ask?"toast('这是问一句 · 已直接答、没落库',function(){})":(c.landed?"go('today')":"go('review')");h+='<div class="card" onclick="'+tgt+'"><div class="ttl" style="font-size:13px">'+(c.ask?'💬 ':'📝 ')+c.raw+'</div><div class="meta"><span>'+(c.ask?'当成"问" · 已直接答、不落库':(c.landed?'✅ 已落地 · 今天':'📋 在待办箱'))+'</span>'+(c.ask?'':'<span class="do ghost" style="margin-left:auto;padding:2px 8px">去处理 ›</span>')+'</div></div>';});
   }
   return h+'</main>';
 }
@@ -376,10 +376,10 @@ function reviewScreen(){
   var h='<div class="head"><div class="back" onclick="go(\'today\')">‹ 今日</div><div class="hi">今晚复盘</div><div class="date">'+todayStr()+' · 目标 5 分钟</div>';
   h+='<div class="glance">待办箱 <b>'+box.length+'</b> 条定时间 · <b>'+missed.length+'</b> 件没记 · <b>'+refls.length+'</b> 条反思</div></div><main>';
   if(box.length){h+='<div class="sec">🗂 待办箱 → 定个时间</div>';
-    box.forEach(function(it){h+='<div class="card"><div class="ttl">'+it.title+'</div><div class="meta">'+bchip('task')+chip(it.domain)+(it.budget?'<span>'+it.budget+'</span>':'')+'</div><div class="meta" style="margin-top:9px">AI 荐：'+['明天 20:00','周四','自定义'].map(function(x){return '<span class="chip" style="cursor:pointer" onclick="schedBox(\''+it.id+'\',\''+(x=='明天 20:00'?'20:00':'')+'\')">'+x+'</span>';}).join('')+'</div></div>';});
+    box.forEach(function(it){h+='<div class="card"><div class="ttl">'+it.title+'</div><div class="meta">'+bchip('task')+chip(it.domain)+(it.budget?'<span>'+it.budget+'</span>':'')+'</div><div class="meta" style="margin-top:9px">改到：<span class="chip" onclick="schedBox(\''+it.id+'\',\'09:00\')">明天 09:00</span><span class="chip" onclick="schedBox(\''+it.id+'\',\'20:00\')">今晚 20:00</span><span class="chip" onclick="openReschedule(\''+it.id+'\')">自定义…</span></div></div>';});
   }
   if(missed.length){h+='<div class="sec">今天没记的</div>';
-    missed.forEach(function(it){h+='<div class="card"><div class="ttl">'+it.title+'</div><div class="meta">'+bchip('task')+chip(it.domain)+'<span>承诺 '+it.time+' 已过</span></div><div class="acts"><button class="pri" onclick="completeTask(\''+it.id+'\')">完成</button><button onclick="schedBox(\''+it.id+'\',\'\')">改期</button><button onclick="cancelTask(\''+it.id+'\')">取消</button></div></div>';});
+    missed.forEach(function(it){h+='<div class="card"><div class="ttl">'+it.title+'</div><div class="meta">'+bchip('task')+chip(it.domain)+'<span>承诺 '+it.time+' 已过</span></div><div class="acts"><button class="pri" onclick="completeTask(\''+it.id+'\')">完成</button><button onclick="openReschedule(\''+it.id+'\')">改期</button><button onclick="cancelTask(\''+it.id+'\')">取消</button></div></div>';});
   }
   h+='<div class="sec">🪞 反思复盘 · 反复到改好</div>';
   if(!refls.length)h+='<div class="empty">没有在复盘的反思 👏</div>';
@@ -389,7 +389,17 @@ function reviewScreen(){
   h+='<div class="night">🌙 复盘完 · 明天见</div>';
   return h+'</main>';
 }
-function schedBox(id,time){var it=find(DB.items,id);if(!it)return;it.box=false;it.time=time||'20:00';it.who=it.who=='待安排'?'':it.who;save();toast('✓ 已排进日程：'+it.time,function(){});render();}
+function schedBox(id,time){var it=find(DB.items,id);if(!it)return;it.box=false;it.time=time||'20:00';it.who=it.who=='待安排'?'':it.who;save();toast('✓ 已排进日程：'+it.time,function(){});go('today');}
+var reId=null;
+function openReschedule(id){var it=find(DB.items,id);if(!it)return;reId=id;
+  var h='<h3>改期 · '+it.title+'</h3><div class="hint">当前：'+(it.time||'待安排')+' → 选个新时间（不会自动顺延）</div>';
+  h+='<div class="field"><label>AI 荐 · 点一下即用</label><div class="seg">'+[['明天 09:00','09:00'],['明天 14:00','14:00'],['今晚 20:00','20:00']].map(function(o){return '<button onclick="reAt(\''+o[1]+'\')">'+o[0]+'</button>';}).join('')+'</div></div>';
+  h+='<div class="field"><label>或自定义时间（HH:MM）</label><input id="retime" inputmode="numeric" placeholder="如 15:30" value="'+(it.time||'')+'"></div>';
+  h+='<button class="fullbtn" onclick="reCustom()">✓ 改到这个时间</button>';
+  openSheet(h);
+}
+function reAt(t){var it=find(DB.items,reId);if(!it)return;it.time=t;it.box=false;if(it.who=='待安排')it.who='';save();closeSheet();toast('✓ 已改期到 '+t,function(){});go('task',reId);}
+function reCustom(){var el=document.getElementById('retime');var m=el?(el.value||'').match(/\d{1,2}:\d{2}/):null;if(!m){toast('填个 HH:MM，比如 15:30',function(){});return;}reAt(m[0]);}
 
 /* ============================ 屏幕：领域 ============================ */
 function domainsScreen(){
@@ -413,7 +423,7 @@ function domainScreen(k){
   var ks=DB.know.filter(function(x){return x.domain==k;});
   if(ks.length){h+='<div class="sec">② 知识 <span class="r" onclick="go(\'knowledge\')">知识库 ›</span></div>';ks.forEach(function(x){h+=kRow(x);});}
   var js=DB.jrnls.filter(function(x){return x.domain==k;});
-  if(js.length){h+='<div class="sec">📖 日记</div>';js.forEach(function(x){h+='<div class="card"><div class="ttl" style="font-size:13.5px">'+x.title+'</div><div class="meta"><span>'+x.text+'</span></div></div>';});}
+  if(js.length){h+='<div class="sec">📖 日记</div>';js.forEach(function(x){h+='<div class="card" onclick="openJournal(\''+x.id+'\')"><div class="ttl" style="font-size:13.5px">'+x.title+'</div><div class="meta"><span>'+x.text+'</span><span class="do ghost" style="margin-left:auto;padding:2px 8px">看 ›</span></div></div>';});}
   return h+'</main>';
 }
 function routineRow(r){return '<div class="card item" onclick="go(\'cycle\',\''+r.id+'\')"><div class="bd"><div class="ttl">'+r.icon+' '+r.name+'</div><div class="meta">'+bchip('checkin')+'<span>'+(r.schedule.length?r.schedule.join('/'):r.cycle||'')+(r.risk=='高'?' · <b style="color:#c04f83">高</b>':'')+'</span></div></div><div class="do ghost">›</div></div>';}
@@ -489,7 +499,7 @@ function taskScreen(id){
   if(it.deleg){var mine=it.who==DB.facts.me;
     h+='<div class="card" style="border-color:#f2d9b8"><div style="font-size:13px;font-weight:800;color:#b26a12;margin-bottom:8px">🔀 '+(mine?(it.by||'于棣')+' 委派给你 · 待你确认':'委派中 · 待 '+it.who+' 确认')+'</div><div class="meta" style="line-height:1.6">'+(mine?'别人派给你的活，你接受了才算你的正式承诺；也可以反提时间。':'跨成员要对方接受才算正式承诺；反提会出冲突决策卡。')+'定夺前不自动改任何日程。</div><div class="acts"><button class="pri" onclick="acceptDeleg(\''+it.id+'\')">'+(mine?'✓ 我接受':'对方接受')+'</button><button onclick="reproposeTask(\''+it.id+'\')">反提时间</button></div></div>';}
   if(it.conflict){h+='<div class="card" style="border-color:#f2d9b8"><div style="font-size:13px;font-weight:800;color:#b26a12;margin-bottom:8px">🔀 冲突决策卡</div><div class="meta" style="line-height:1.7">反提：<b>'+it.conflict.old+' → '+it.conflict.neu+'</b>（'+it.conflict.reason+'）<br>连锁影响：无其它任务 / 另一人日程受影响</div><div class="acts"><button class="pri" onclick="acceptConflict(\''+it.id+'\')">接受 '+it.conflict.neu+'</button><button onclick="go(\'today\')">再想想</button></div><div class="meta" style="text-align:center;margin-top:8px">定夺前不自动改任何正式日程</div></div>';}
-  if(!it.done)h+='<div class="acts"><button class="pri" onclick="completeTask(\''+it.id+'\')">✓ 完成</button><button onclick="schedBox(\''+it.id+'\',\'\')">改期</button><button onclick="cancelTask(\''+it.id+'\')">取消</button></div>';
+  if(!it.done)h+='<div class="acts"><button class="pri" onclick="completeTask(\''+it.id+'\')">✓ 完成</button><button onclick="openReschedule(\''+it.id+'\')">改期</button><button onclick="cancelTask(\''+it.id+'\')">取消</button></div>';
   return h+'</main>';
 }
 function completeTask(id){var it=find(DB.items,id);if(!it)return;it.done=true;save();toast('✓ 已完成：'+it.title,function(){it.done=false;save();});render();}
@@ -645,8 +655,8 @@ function searchResults(q){
   var t2=DB.know.filter(function(x){return m(x.title)||m(x.point);});if(t2.length){h+='<div class="sec">② 知识</div>';t2.forEach(function(x){hit++;h+=kRow(x);});}
   var t3=DB.items.filter(function(x){return m(x.title);});if(t3.length){h+='<div class="sec">④ 任务</div>';t3.forEach(function(x){hit++;h+=taskRow(x);});}
   var t4=DB.routines.filter(function(x){return m(x.name);});if(t4.length){h+='<div class="sec">③ 循环</div>';t4.forEach(function(x){hit++;h+=routineRow(x);});}
-  var t5=DB.refls.filter(function(x){return m(x.text)||m(x.note);});if(t5.length){h+='<div class="sec">⑥ 反思</div>';t5.forEach(function(x){hit++;h+='<div class="card"><div class="ttl" style="font-size:13.5px">🪞 '+x.text+'</div><div class="meta"><span class="chip">🔒私密</span></div></div>';});}
-  var t6=DB.jrnls.filter(function(x){return m(x.title)||m(x.text);});if(t6.length){h+='<div class="sec">📖 日记</div>';t6.forEach(function(x){hit++;h+='<div class="card"><div class="ttl" style="font-size:13.5px">'+x.title+'</div><div class="meta"><span>'+x.text+'</span></div></div>';});}
+  var t5=DB.refls.filter(function(x){return m(x.text)||m(x.note);});if(t5.length){h+='<div class="sec">⑥ 反思</div>';t5.forEach(function(x){hit++;h+='<div class="card" onclick="go(\'journal\')"><div class="ttl" style="font-size:13.5px">🪞 '+x.text+'</div><div class="meta"><span class="chip">🔒私密</span><span class="do ghost" style="margin-left:auto;padding:2px 8px">›</span></div></div>';});}
+  var t6=DB.jrnls.filter(function(x){return m(x.title)||m(x.text);});if(t6.length){h+='<div class="sec">📖 日记</div>';t6.forEach(function(x){hit++;h+='<div class="card" onclick="openJournal(\''+x.id+'\')"><div class="ttl" style="font-size:13.5px">'+x.title+'</div><div class="meta"><span>'+x.text+'</span><span class="do ghost" style="margin-left:auto;padding:2px 8px">看 ›</span></div></div>';});}
   return hit?h:'<div class="empty">没搜到「'+q+'」相关的。</div>';
 }
 
