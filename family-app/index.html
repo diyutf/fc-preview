@@ -16,7 +16,7 @@
     --shadow:0 2px 8px rgba(30,70,50,.05);--radius:16px;
     --miss:#fdf3e6;--missf:#b26a12}
   html,body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Noto Sans CJK SC",sans-serif}
-  #app{max-width:460px;margin:0 auto;min-height:100vh;padding-bottom:150px;position:relative}
+  #app{max-width:460px;margin:0 auto;min-height:100vh;padding-bottom:190px;position:relative}
   .head{padding:22px 20px 16px;background:#fff;border-bottom:1px solid var(--line)}
   .head.dom{color:#fff;border:0}
   .hi{font-size:22px;font-weight:800;letter-spacing:-.02em}
@@ -529,7 +529,12 @@ function careBrief(){var w=careWeeks();
   tips.forEach(function(t){h+='<div style="padding:9px 0;border-top:1px solid var(--line)"><span class="chip" style="background:'+t.bg+';color:'+t.c+'">'+t.g+'</span> <b style="font-size:13px">'+t.t+'</b><div class="meta">'+t.s+' · 来源 '+t.src+'</div></div>';});
   return h+'<div class="meta" style="margin-top:8px">医疗建议标来源+适用范围，需你确认，不自动改用药/检查计划。</div></div>';
 }
-function capMode(m){if(m=='sort')return go('sort');if(m=='photo')return toast('📷 拍照录入（拍收据/物品）· 一键入口 demo',function(){});var el=document.getElementById('cap');if(el)el.focus();}
+function capMode(m){var el=document.getElementById('cap');
+  if(m=='sort')return go('sort');
+  if(m=='photo')return toast('📷 拍照录入：拍收据/物品，AI 提取（下一步接真识别）',function(){});
+  if(m=='voice'){if(el)el.focus();return toast('🎙️ 说话：点手机键盘上的 🎤 听写，说完 AI 照样归位',function(){});}
+  if(el)el.focus();
+}
 function openJournal(id){var j=find(DB.jrnls,id);if(!j)return;openSheet('<h3>'+j.title+'</h3><div class="hint">'+DOMAINS[j.domain].name+' · 作者 '+(j.author||'')+' · 🔒 私密</div><div style="font-size:14px;line-height:1.75;margin-bottom:18px">'+j.text+'</div><button class="fullbtn" onclick="closeSheet()">关闭</button>');}
 function editBaby(){var v=prompt('宝宝小名',DB.facts.baby);if(!v)return;DB.facts.baby=v;save();toast('✓ 已改：'+v,function(){});render();}
 
