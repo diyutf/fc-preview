@@ -147,7 +147,7 @@ function bchip(k){var m=BLK[k];return m?'<span class="chip" style="background:'+
 /* ============================ 数据层 ============================ */
 var KEY='td.db.v1';
 function seed(){return {
-  facts:{me:'Tina',dueDate:'2026-02-28',members:['Tina','于棣','妈妈'],baby:'于摆摆'},
+  facts:{me:'Tina',dueDate:'2026-10-10',members:['Tina','于棣','妈妈'],baby:'于摆摆'},
   routines:[
     {id:'r1',name:'数胎动',domain:'baby',icon:'👶',risk:'高',schedule:['20:00'],rotation:['Tina'],
      fields:[{key:'count',label:'数量',type:'num',unit:'次',def:10},{key:'dur',label:'时长',type:'num',unit:'分',def:30}],
@@ -168,8 +168,8 @@ function seed(){return {
   plans:[
     {id:'p1',title:'三年回国',domain:'grow',target:'2029 Q2',link:'孕育之外·成长专题',collId:'c1',
      ms:[{n:'确定签证类别(EB-1/NIW)',s:'done',d:'已达成 2026-06'},{n:'备齐推荐信+材料',s:'now',d:'目标 2026-12',hang:'挂 ③每周整理'},{n:'递交申请',s:'todo',d:'目标 2027 Q2',hang:'倒排「约律师」1月初'},{n:'面签',s:'todo',d:'目标 2028'},{n:'搬家+落户',s:'todo',d:'目标 2029 Q2'}]},
-    {id:'p2',title:'迎接宝宝',domain:'baby',target:'预产期 2026-02',link:'',collId:'c2',
-     ms:[{n:'确认预产期',s:'done',d:'已达成'},{n:'备齐待产包',s:'now',d:'目标 1 月',hang:'倒排 待产清单'},{n:'布置婴儿房',s:'todo',d:'目标 1 月中'},{n:'迎接于摆摆',s:'todo',d:'预产期 2026-02'}]}
+    {id:'p2',title:'迎接宝宝',domain:'baby',target:'预产期 2026-10',link:'',collId:'c2',
+     ms:[{n:'确认预产期',s:'done',d:'已达成'},{n:'备齐待产包',s:'now',d:'目标 9 月',hang:'倒排 待产清单'},{n:'布置婴儿房',s:'todo',d:'目标 9 月中'},{n:'迎接于摆摆',s:'todo',d:'预产期 2026-10'}]}
   ],
   colls:[
     {id:'c1',icon:'🌏',title:'三年回国规划',domain:'grow',sub:'连里程碑',planId:'p1'},
