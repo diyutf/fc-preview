@@ -151,12 +151,12 @@ function seed(){return {
   routines:[
     {id:'r1',name:'数胎动',domain:'baby',icon:'👶',risk:'高',schedule:['20:00'],rotation:['Tina'],
      fields:[{key:'count',label:'数量',type:'num',unit:'次',def:10},{key:'dur',label:'时长',type:'num',unit:'分',def:30}],
-     source:'知识「孕晚期数胎动」',records:[{date:'昨天',time:'20:05',by:'Tina',done:true,detail:'12 次 · 30 分'},{date:'前天',time:'20:00',by:'Tina',done:true,detail:'10 次'},{date:'大前天',by:'Tina',miss:true}]},
+     source:'知识「孕晚期数胎动」',handoff:'宝宝今天动得少一点，晚上这次多留意。',records:[{date:'昨天',time:'20:05',by:'Tina',done:true,detail:'12 次 · 30 分'},{date:'前天',time:'20:00',by:'Tina',done:true,detail:'10 次'},{date:'大前天',by:'Tina',miss:true}]},
     {id:'r2',name:'遛狗',domain:'home',icon:'🐕',risk:'中',schedule:['07:30','12:30','18:30'],rotation:['妈妈','Tina','于棣'],
-     fields:[{key:'dur',label:'时长',type:'num',unit:'分钟',def:30},{key:'route',label:'路线',type:'text',ph:'粘贴 Google 路线链接'}],
-     source:'',records:[{date:'今天',time:'07:35',by:'妈妈',done:true,detail:'河边 · 30 分'}]},
+     fields:[{key:'dur',label:'时长',type:'num',unit:'分钟',def:30},{key:'route',label:'路线',type:'loc',ph:'粘贴 Google 路线链接'}],
+     source:'',handoff:'灰灰中午没排便，晚上这趟多走会儿。',records:[{date:'今天',time:'07:35',by:'妈妈',done:true,detail:'河边 · 30 分'}]},
     {id:'r3',name:'HVAC 滤芯',domain:'home',icon:'🏠',risk:'低',cycle:'每季度',schedule:[],rotation:[],
-     fields:[{key:'cost',label:'费用',type:'num',unit:'$',def:28},{key:'note',label:'备注',type:'text',ph:'型号 / 保修'}],
+     fields:[{key:'cost',label:'费用',type:'money'},{key:'photo',label:'照片（收据）',type:'photo'},{key:'file',label:'保修单 PDF',type:'file'},{key:'note',label:'备注',type:'text',ph:'型号 / 保修'}],
      source:'',records:[{date:'上季度',by:'',done:true,detail:'$28 · MERV11'}],due:'还有 8 天'}
   ],
   items:[
@@ -378,7 +378,9 @@ function reviewScreen(){
   }
   h+='<div class="sec">🪞 反思复盘 · 反复到改好</div>';
   if(!refls.length)h+='<div class="empty">没有在复盘的反思 👏</div>';
-  refls.forEach(function(r){h+='<div class="refl"><div class="rt">'+r.text+'</div><div class="rx">'+(r.note||'')+'</div><div class="meta">'+bchip('refl')+'<span>连 '+r.count+' 次冒出</span></div><div class="acts"><button onclick="speak(\''+r.id+'\')">🔊 开车念</button><button class="pri" onclick="archRefl(\''+r.id+'\')">改好了 · 划掉</button></div></div>';});
+  refls.forEach(function(r){h+='<div class="refl"><div class="rt">'+r.text+'</div><div class="rx">'+(r.note||'')+'</div><div class="meta">'+bchip('refl')+'<span>连 '+r.count+' 次冒出</span></div><div class="acts"><button onclick="speak(\''+r.id+'\')">🔊 念</button><button onclick="reflToAction(\''+r.id+'\')">→ 转行动</button><button class="pri" onclick="archRefl(\''+r.id+'\')">改好了·划掉</button></div></div>';});
+  h+='<div class="sec">④ → ③ 升级（板块间流动）</div>';
+  h+='<div class="card" style="border-left:3px solid #8b5cf6"><div class="ttl" style="font-size:13.5px">💡「买菜」你这周做了 5 次</div><div class="meta" style="line-height:1.5;margin-top:4px">要不要升级成 ③循环打卡？以后自动每天生成、进今日、可轮值。</div><div class="acts"><button class="pri" onclick="upgradeToCycle(\'买菜\',\'home\')">⤴ 升级成 ③循环</button><button onclick="toast(\'先不用\',function(){})">先不用</button></div></div>';
   h+='<div class="night">🌙 复盘完 · 明天见</div>';
   return h+'</main>';
 }
@@ -424,6 +426,9 @@ function cycleScreen(id){
   if(r.risk)h+='<div class="drow"><span class="k">风险</span><span class="v">'+r.risk+(r.risk=='高'?'（漏了立即升级）':'')+'</span></div>';
   if(r.source)h+='<div class="drow"><span class="k">来源</span><span class="v">'+r.source+'</span></div>';
   h+='</div>';
+  if(hasRot){var wk='';var di=(new Date().getDay()+6)%7;for(var i=0;i<7;i++){var who=r.rotation[i%r.rotation.length];var t2=i==di;wk+='<div style="flex:1;text-align:center;background:'+(t2?d.color:'#f4f6fa')+';color:'+(t2?'#fff':'var(--text)')+';border-radius:10px;padding:8px 2px;font-size:11px;font-weight:700">'+['一','二','三','四','五','六','日'][i]+'<br>'+(who==DB.facts.me?'你':who)+'</div>';}
+    h+='<div class="sec">本周轮值 <span class="r" onclick="toast(\'换班：demo，可选某天改人\',function(){})">换班</span></div><div style="display:flex;gap:5px;margin-bottom:10px">'+wk+'</div>';}
+  if(r.handoff)h+='<div class="near">🔁 交接给下一班：'+r.handoff+'</div>';
   h+='<button class="fullbtn" onclick="openCheckin(\''+r.id+'\')">✓ '+(hasRot?'今天打卡':'完成并录入')+'</button>';
   h+='<div class="sec">记录 · 连做 '+r.records.filter(function(x){return x.done;}).length+' 次</div>';
   if(!r.records.length)h+='<div class="empty">还没有记录，点上面打卡。</div>';
@@ -439,6 +444,14 @@ function openCheckin(id){
   r.fields.forEach(function(f){
     if(f.type=='num'){cform[f.key]=f.def;
       h+='<div class="field"><label>'+f.label+'</label><input type="number" inputmode="decimal" value="'+f.def+'" oninput="cform[\''+f.key+'\']=this.value"> <span style="font-size:12px;color:var(--muted)">'+(f.unit||'')+'</span></div>';
+    }else if(f.type=='money'){cform[f.key]='';
+      h+='<div class="field"><label>'+f.label+'</label><div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px;font-weight:700">$</span><input style="flex:1" type="number" inputmode="decimal" placeholder="0.00" oninput="cform[\''+f.key+'\']=this.value"></div></div>';
+    }else if(f.type=='loc'){cform[f.key]='';
+      h+='<div class="field"><label>'+f.label+'</label><input placeholder="'+(f.ph||'粘贴 Google 地图/路线链接')+'" oninput="cform[\''+f.key+'\']=this.value"><div style="font-size:11px;color:var(--muted);margin-top:5px">📍 贴 Google 链接，保存后渲染地图（位置/路线类型）</div></div>';
+    }else if(f.type=='photo'){cform[f.key]='📷 照片';
+      h+='<div class="field"><label>'+f.label+'</label><label style="display:block;border:1px dashed var(--line);border-radius:11px;padding:14px;text-align:center;color:var(--muted)">＋ 拍照 / 相册上传<input type="file" accept="image/*" hidden></label></div>';
+    }else if(f.type=='file'){cform[f.key]='📄 文件';
+      h+='<div class="field"><label>'+f.label+'</label><label style="display:block;border:1px dashed var(--line);border-radius:11px;padding:14px;text-align:center;color:var(--muted)">＋ 上传 PDF / 保修单<input type="file" hidden></label></div>';
     }else{cform[f.key]='';
       h+='<div class="field"><label>'+f.label+'</label><input placeholder="'+(f.ph||'')+'" oninput="cform[\''+f.key+'\']=this.value"></div>';}
   });
@@ -469,20 +482,27 @@ function taskScreen(id){
     (it.hard?'<div class="drow"><span class="k">硬截止</span><span class="v" style="color:#b26a12">'+it.hard+'</span></div>':'')+'</div>';
   if(it.deleg){var mine=it.who==DB.facts.me;
     h+='<div class="card" style="border-color:#f2d9b8"><div style="font-size:13px;font-weight:800;color:#b26a12;margin-bottom:8px">🔀 '+(mine?(it.by||'于棣')+' 委派给你 · 待你确认':'委派中 · 待 '+it.who+' 确认')+'</div><div class="meta" style="line-height:1.6">'+(mine?'别人派给你的活，你接受了才算你的正式承诺；也可以反提时间。':'跨成员要对方接受才算正式承诺；反提会出冲突决策卡。')+'定夺前不自动改任何日程。</div><div class="acts"><button class="pri" onclick="acceptDeleg(\''+it.id+'\')">'+(mine?'✓ 我接受':'对方接受')+'</button><button onclick="reproposeTask(\''+it.id+'\')">反提时间</button></div></div>';}
+  if(it.conflict){h+='<div class="card" style="border-color:#f2d9b8"><div style="font-size:13px;font-weight:800;color:#b26a12;margin-bottom:8px">🔀 冲突决策卡</div><div class="meta" style="line-height:1.7">反提：<b>'+it.conflict.old+' → '+it.conflict.neu+'</b>（'+it.conflict.reason+'）<br>连锁影响：无其它任务 / 另一人日程受影响</div><div class="acts"><button class="pri" onclick="acceptConflict(\''+it.id+'\')">接受 '+it.conflict.neu+'</button><button onclick="go(\'today\')">再想想</button></div><div class="meta" style="text-align:center;margin-top:8px">定夺前不自动改任何正式日程</div></div>';}
   if(!it.done)h+='<div class="acts"><button class="pri" onclick="completeTask(\''+it.id+'\')">✓ 完成</button><button onclick="schedBox(\''+it.id+'\',\'\')">改期</button><button onclick="cancelTask(\''+it.id+'\')">取消</button></div>';
   return h+'</main>';
 }
 function completeTask(id){var it=find(DB.items,id);if(!it)return;it.done=true;save();toast('✓ 已完成：'+it.title,function(){it.done=false;save();});render();}
 function cancelTask(id){DB.items=DB.items.filter(function(x){return x.id!=id;});save();toast('已取消',function(){});go(state.view=='task'?'today':state.view);}
 function acceptDeleg(id){var it=find(DB.items,id);it.deleg='';save();toast('✓ '+(it.who==DB.facts.me?'你已接受，成你的正式承诺':it.who+' 已接受'),function(){});go('task',id);}
-function reproposeTask(id){var it=find(DB.items,id);toast('🔀 已反提时间 → 生成冲突决策卡给 '+(it.by||'于棣')+' 定夺',function(){});}
+function reproposeTask(id){var it=find(DB.items,id);it.conflict={old:it.time||'周四',neu:'周六',reason:(it.who==DB.facts.me?'你':it.who)+'那天有产检'};save();toast('🔀 已反提 → 生成冲突决策卡',function(){});go('task',id);}
+function acceptConflict(id){var it=find(DB.items,id);it.time=it.conflict.neu;it.conflict=null;it.deleg='';save();toast('✓ 定了新时间：'+it.time,function(){});go('task',id);}
 function switchMe(){var m=DB.facts.members;var i=(m.indexOf(DB.facts.me)+1)%m.length;DB.facts.me=m[i];save();toast('已切换身份：'+DB.facts.me,function(){});render();}
+function upgradeToCycle(name,dom){DB.routines.push({id:uid(),name:name,domain:dom,icon:DOMAINS[dom].icon,risk:'中',schedule:['18:00'],rotation:[DB.facts.me],fields:[{key:'note',label:'备注',type:'text'}],source:'④→③升级',records:[]});save();toast('⤴ 已升级成 ③循环：'+name,function(){});go('today');}
+function reflToAction(id){var r=find(DB.refls,id);DB.items.push({id:uid(),kind:'task',title:'改正：'+r.text.slice(0,10),domain:'grow',time:'',who:DB.facts.me,box:true,done:false,from:'⑥反思'});save();toast('→ 已转成 ④改正行动 · 待办箱',function(){});go('review');}
+function applyImpact(){var p=find(DB.plans,'p1');var m=p.ms.filter(function(x){return x.n.indexOf('递交')>=0;})[0];if(m){m.d='目标 2027-03（提前 · 产前备齐）';m.hang='';}DB.facts.dueChanged=null;save();toast('✓ 已用 AI 新排',function(){});render();}
+function clearImpact(){DB.facts.dueChanged=null;save();toast('保留原计划',function(){});render();}
 
 /* ============================ 屏幕：⑤ 计划 ============================ */
 function planScreen(id){
   var p=find(DB.plans,id);if(!p)return go('today');
   var d=DOMAINS[p.domain];var done=doneMs(p),pct=Math.round(done/p.ms.length*100);
   var h='<div class="head dom" style="background:'+d.color+'"><div class="back" onclick="go(\'today\')">‹ 返回</div><div class="hi">🎯 '+p.title+'</div><div class="date">⑤ 计划 · 路线图 · '+d.name+'</div></div><main>';
+  if(id=='p1'&&DB.facts.dueChanged){h+='<div class="card" style="border-color:#f2d9b8"><div style="font-size:13px;font-weight:800;color:#b26a12;margin-bottom:8px">🔀 影响分析（预产期 '+DB.facts.dueChanged.old.slice(0,7)+' → '+DB.facts.dueChanged.neu.slice(0,7)+' · 撞「递交申请」窗口）</div><div class="meta" style="line-height:1.7">受影响里程碑：<b>递交申请</b>（与产期撞）· <b>搬家+落户</b>（顺延）<br>受影响任务：3 个需重排 · 不受影响：签证类别、面签</div><div class="acts"><button class="pri" onclick="applyImpact()">用 AI 新排</button><button onclick="clearImpact()">保留原计划</button></div><div class="meta" style="text-align:center;margin-top:8px">AI 只发现+算+摆新旧，不自动改</div></div>';}
   h+='<div class="card">'+(p.collId?'<span class="chip" style="background:#f3ecfb;color:#7a52c9;cursor:pointer" onclick="go(\'knowledge\')">🔗 连 ②专题</span>':'')+
     '<div class="prog"><i style="width:'+pct+'%"></i></div><div class="progl"><span>里程碑 '+done+' / '+p.ms.length+' 达成</span><span>目标 '+p.target+'</span></div></div>';
   h+='<div class="sec">里程碑（近细远粗 · 边走边补）</div>';
@@ -553,7 +573,7 @@ function journalScreen(){
   h+='<div class="sec">🪞 反思 · 反复到改好</div>';
   var act=DB.refls.filter(function(r){return !r.arch;});
   if(!act.length)h+='<div class="empty">没有在复盘的反思。</div>';
-  act.forEach(function(r){h+='<div class="refl"><div class="rt">'+r.text+'</div><div class="rx">'+(r.note||'')+'</div><div class="meta">'+bchip('refl')+'<span>连 '+r.count+' 次冒出</span></div><div class="acts"><button onclick="speak(\''+r.id+'\')">🔊 开车念</button><button class="pri" onclick="archRefl(\''+r.id+'\')">改好了 · 划掉</button></div></div>';});
+  act.forEach(function(r){h+='<div class="refl"><div class="rt">'+r.text+'</div><div class="rx">'+(r.note||'')+'</div><div class="meta">'+bchip('refl')+'<span>连 '+r.count+' 次冒出</span></div><div class="acts"><button onclick="speak(\''+r.id+'\')">🔊 念</button><button onclick="reflToAction(\''+r.id+'\')">→ 转行动</button><button class="pri" onclick="archRefl(\''+r.id+'\')">改好了·划掉</button></div></div>';});
   var arch=DB.refls.filter(function(r){return r.arch;});
   arch.forEach(function(r){h+='<div class="refl arch"><div class="rt">'+r.text+'</div><div class="meta"><span>✅ 已改好 · 归档 · 不再冒</span></div></div>';});
   h+='<div class="sec">📖 普通日记 · 只存 + 搜</div>';
@@ -620,9 +640,9 @@ function meScreen(){
   h+='<div class="sec">关于</div><div class="card"><div class="drow"><span class="k">版本</span><span class="v">TD Home · 六积木整合版</span></div><div class="drow"><span class="k">积木</span><span class="v">①记 ②知识 ③循环 ④任务 ⑤计划 ⑥反思</span></div><div class="drow"><span class="k">⑦ 财务</span><span class="v" style="color:var(--muted)">按约定 deferred</span></div></div>';
   return h+'</main>';
 }
-function editDue(){var v=prompt('预产期（YYYY-MM-DD）',DB.facts.dueDate);if(!v)return;DB.facts.dueDate=v;
+function editDue(){var v=prompt('预产期（YYYY-MM-DD）',DB.facts.dueDate);if(!v)return;var old=DB.facts.dueDate;DB.facts.dueDate=v;
   var p=find(DB.plans,'p2');if(p){p.target='预产期 '+v.slice(0,7);p.ms[p.ms.length-1].d='预产期 '+v.slice(0,7);}
-  save();toast('✓ 预产期已改 → ⑤「迎接宝宝」已重算',function(){});render();}
+  DB.facts.dueChanged={old:old,neu:v};save();toast('✓ 预产期改了 → 跑影响分析',function(){});go('plan','p1');}
 function resetAll(){if(confirm('重置为示例数据？你记的会清掉。')){DB=seed();save();toast('已重置',function(){});go('today');}}
 
 /* ============================ 通用 ============================ */
