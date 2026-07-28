@@ -147,7 +147,7 @@ function bchip(k){var m=BLK[k];return m?'<span class="chip" style="background:'+
 /* ============================ 数据层 ============================ */
 var KEY='td.db.v1';
 function seed(){return {
-  facts:{dueDate:'2026-02-28',members:['Tina','于棣','妈妈'],baby:'于摆摆'},
+  facts:{me:'Tina',dueDate:'2026-02-28',members:['Tina','于棣','妈妈'],baby:'于摆摆'},
   routines:[
     {id:'r1',name:'数胎动',domain:'baby',icon:'👶',risk:'高',schedule:['20:00'],rotation:['Tina'],
      fields:[{key:'count',label:'数量',type:'num',unit:'次',def:10},{key:'dur',label:'时长',type:'num',unit:'分',def:30}],
@@ -162,7 +162,7 @@ function seed(){return {
   items:[
     {id:'i1',kind:'task',title:'约移民律师',domain:'grow',time:'09:00',who:'于棣',from:'⑤三年回国',done:false},
     {id:'i2',kind:'task',title:'约维修工修洗碗机',domain:'home',time:'14:00',who:'于棣',hard:'最晚周五(保修到期)',est:'30分',done:false},
-    {id:'i3',kind:'task',title:'买婴儿床垫',domain:'baby',time:'',who:'Tina',deleg:'待接受',box:false,wait:'',done:false},
+    {id:'i3',kind:'task',title:'买婴儿床垫',domain:'baby',time:'',who:'Tina',by:'于棣',deleg:'待接受',box:false,wait:'',done:false},
     {id:'i4',kind:'task',title:'买空气净化器',domain:'baby',budget:'$200',who:'待安排',box:true,done:false}
   ],
   plans:[
@@ -195,7 +195,8 @@ function seed(){return {
   checks:{}  /* routineId+date -> true (今天是否已打卡) */
 };}
 var DB;
-function load(){try{DB=JSON.parse(localStorage.getItem(KEY));if(!DB||!DB.routines)DB=seed();}catch(e){DB=seed();}}
+function load(){try{DB=JSON.parse(localStorage.getItem(KEY));if(!DB||!DB.routines)DB=seed();}catch(e){DB=seed();}
+  if(DB.facts&&!DB.facts.me)DB.facts.me='Tina';}
 function save(){localStorage.setItem(KEY,JSON.stringify(DB));}
 function uid(){return 'x'+Math.random().toString(36).slice(2,8);}
 function find(arr,id){for(var i=0;i<arr.length;i++)if(arr[i].id==id)return arr[i];return null;}
@@ -225,7 +226,7 @@ function todayItems(){
     list.push({rt:'checkin',rid:r.id,title:r.name,domain:r.domain,time:slot,who:r.rotation&&r.rotation.length?r.rotation[(new Date().getDay()+6)%7 % r.rotation.length]:'',risk:r.risk,done:!!doneToday});
   });
   // ④ tasks (not box)
-  DB.items.forEach(function(it){if(it.box)return;list.push({rt:'task',id:it.id,title:it.title,domain:it.domain,time:it.time,who:it.who||'',deleg:it.deleg,from:it.from,done:it.done});});
+  DB.items.forEach(function(it){if(it.box)return;list.push({rt:'task',id:it.id,title:it.title,domain:it.domain,time:it.time,who:it.who||'',by:it.by,deleg:it.deleg,from:it.from,done:it.done});});
   list.sort(function(a,b){return tmin(a.time)-tmin(b.time);});
   return list;
 }
@@ -235,7 +236,7 @@ function boxItems(){return DB.items.filter(function(it){return it.box;});}
 function todayScreen(){
   var items=todayItems(),box=boxItems();
   var undone=items.filter(function(x){return !x.done;});
-  var h='<div class="head"><div class="hi">'+greet()+'，于棣 🌿</div><div class="date">'+todayStr()+' · 多云 22°</div>';
+  var h='<div class="head"><div class="hi">'+greet()+'，'+DB.facts.me+' 🌿</div><div class="date">'+todayStr()+' · 多云 22°</div>';
   h+='<div class="glance">今天 <b>'+undone.length+' 件</b>要做 · 待办箱 <b>'+box.length+' 条</b>待定时间 · 晚 9:00 <b>复盘</b></div></div><main>';
   h+='<div class="sec">今天要做</div>';
   if(!items.length)h+='<div class="empty">今天没有安排。点右下角 ＋ 随手记一笔。</div>';
@@ -244,9 +245,12 @@ function todayScreen(){
     var btn;
     if(x.done)btn='<button class="do ghost" onclick="event.stopPropagation()">✓</button>';
     else if(x.rt=='checkin')btn='<button class="do" onclick="event.stopPropagation();openCheckin(\''+x.rid+'\')">打卡</button>';
+    else if(x.deleg&&x.who==DB.facts.me)btn='<button class="do" onclick="event.stopPropagation();acceptDeleg(\''+x.id+'\')">接受</button>';
     else if(x.deleg)btn='<button class="do mut" onclick="event.stopPropagation()">待接受</button>';
     else btn='<button class="do" onclick="event.stopPropagation();completeTask(\''+x.id+'\')">完成</button>';
-    var meta=(x.rt=='checkin'?bchip('checkin'):bchip('task'))+chip(x.domain)+'<span>'+(x.who||'')+(x.from?' · 来自'+x.from:'')+(x.deleg?' · '+x.deleg:'')+(x.risk=='高'?' · <b style="color:#c04f83">高风险</b>':'')+'</span>';
+    var whoTxt=x.who==DB.facts.me?'你':(x.who||'');
+    var delTxt=x.deleg?(x.who==DB.facts.me?' · '+(x.by||'')+'派给你·待接受':' · '+x.deleg):'';
+    var meta=(x.rt=='checkin'?bchip('checkin'):bchip('task'))+chip(x.domain)+'<span>'+whoTxt+(x.from?' · 来自'+x.from:'')+delTxt+(x.risk=='高'?' · <b style="color:#c04f83">高风险</b>':'')+'</span>';
     var target=x.rt=='checkin'?"go('cycle','"+x.rid+"')":"go('task','"+x.id+"')";
     h+='<div class="card item" onclick="'+target+'"><div class="tm'+(x.time?'':' none')+(x.risk=="高"?" hi":"")+'">'+t+'</div><div class="bd"><div class="ttl'+(x.done?' done':'')+'">'+x.title+'</div><div class="meta">'+meta+'</div></div>'+btn+'</div>';
   });
@@ -434,13 +438,16 @@ function taskScreen(id){
     (it.budget?'<div class="drow"><span class="k">预算</span><span class="v">'+it.budget+'</span></div>':'')+
     (it.from?'<div class="drow"><span class="k">来自</span><span class="v">'+it.from+'</span></div>':'')+
     (it.hard?'<div class="drow"><span class="k">硬截止</span><span class="v" style="color:#b26a12">'+it.hard+'</span></div>':'')+'</div>';
-  if(it.deleg){h+='<div class="card" style="border-color:#f2d9b8"><div style="font-size:13px;font-weight:800;color:#b26a12;margin-bottom:8px">🔀 委派中 · 待 '+it.who+' 确认</div><div class="meta" style="line-height:1.6">跨成员要对方接受才算正式承诺；反提会出冲突决策卡。定夺前不自动改任何日程。</div><div class="acts"><button class="pri" onclick="acceptDeleg(\''+it.id+'\')">对方接受</button><button onclick="go(\'today\')">先等等</button></div></div>';}
+  if(it.deleg){var mine=it.who==DB.facts.me;
+    h+='<div class="card" style="border-color:#f2d9b8"><div style="font-size:13px;font-weight:800;color:#b26a12;margin-bottom:8px">🔀 '+(mine?(it.by||'于棣')+' 委派给你 · 待你确认':'委派中 · 待 '+it.who+' 确认')+'</div><div class="meta" style="line-height:1.6">'+(mine?'别人派给你的活，你接受了才算你的正式承诺；也可以反提时间。':'跨成员要对方接受才算正式承诺；反提会出冲突决策卡。')+'定夺前不自动改任何日程。</div><div class="acts"><button class="pri" onclick="acceptDeleg(\''+it.id+'\')">'+(mine?'✓ 我接受':'对方接受')+'</button><button onclick="reproposeTask(\''+it.id+'\')">反提时间</button></div></div>';}
   if(!it.done)h+='<div class="acts"><button class="pri" onclick="completeTask(\''+it.id+'\')">✓ 完成</button><button onclick="schedBox(\''+it.id+'\',\'\')">改期</button><button onclick="cancelTask(\''+it.id+'\')">取消</button></div>';
   return h+'</main>';
 }
 function completeTask(id){var it=find(DB.items,id);if(!it)return;it.done=true;save();toast('✓ 已完成：'+it.title,function(){it.done=false;save();});render();}
 function cancelTask(id){DB.items=DB.items.filter(function(x){return x.id!=id;});save();toast('已取消',function(){});go(state.view=='task'?'today':state.view);}
-function acceptDeleg(id){var it=find(DB.items,id);it.deleg='';save();toast('✓ '+it.who+' 已接受',function(){});go('task',id);}
+function acceptDeleg(id){var it=find(DB.items,id);it.deleg='';save();toast('✓ '+(it.who==DB.facts.me?'你已接受，成你的正式承诺':it.who+' 已接受'),function(){});go('task',id);}
+function reproposeTask(id){var it=find(DB.items,id);toast('🔀 已反提时间 → 生成冲突决策卡给 '+(it.by||'于棣')+' 定夺',function(){});}
+function switchMe(){var m=DB.facts.members;var i=(m.indexOf(DB.facts.me)+1)%m.length;DB.facts.me=m[i];save();toast('已切换身份：'+DB.facts.me,function(){});render();}
 
 /* ============================ 屏幕：⑤ 计划 ============================ */
 function planScreen(id){
@@ -572,10 +579,12 @@ function searchResults(q){
 function meScreen(){
   var f=DB.facts;
   var h='<div class="head"><div class="hi">我</div><div class="date">共享事实 · 成员 · 设置</div></div><main>';
+  h+='<div class="sec">身份 · 成员（共享底座）</div>';
+  h+='<div class="card"><div class="drow"><span class="k">当前身份（你）</span><span class="v" onclick="switchMe()" style="color:var(--dot);cursor:pointer">'+f.me+' ⇄ 切换</span></div><div class="drow"><span class="k">家庭成员</span><span class="v">'+f.members.join(' · ')+'</span></div></div>';
+  h+='<div class="near">👤 示例数据是从「于棣」视角种的（他建了几条派给你）。你是 <b>Tina</b> → 首页问候、"谁值班 / 待谁接受" 都按你来；点上面可切成别的成员看他们视角。</div>';
   h+='<div class="sec">共享事实层（改一处，⑤/④ 自动跟着算）</div>';
   h+='<div class="card"><div class="drow"><span class="k">预产期</span><span class="v" onclick="editDue()" style="color:var(--dot);cursor:pointer">'+f.dueDate+' ✎</span></div>'+
-     '<div class="drow"><span class="k">宝宝小名</span><span class="v">'+f.baby+'</span></div>'+
-     '<div class="drow"><span class="k">成员</span><span class="v">'+f.members.join(' · ')+'</span></div></div>';
+     '<div class="drow"><span class="k">宝宝小名</span><span class="v">'+f.baby+'</span></div></div>';
   h+='<div class="near">🔗 改预产期 → 会传播：⑤「迎接宝宝」目标、相关 ④任务的倒排该动手日都会重算（这就是"共享事实层"）。</div>';
   h+='<div class="sec">数据</div>';
   h+='<div class="card"><div class="ttl" style="font-size:13.5px">全部存在这台手机本地</div><div class="meta"><span>关掉重开都在 · 没上云、无别处备份</span></div><div class="acts"><button onclick="resetAll()">重置为示例数据</button></div></div>';
