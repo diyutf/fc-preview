@@ -210,7 +210,7 @@ function tabget(name){return (['今日','日历','领域','搜索','我'].indexO
 function todayStr(){var d=new Date();var wd=['日','一','二','三','四','五','六'][d.getDay()];return '周'+wd+' · '+(d.getMonth()+1)+' 月 '+d.getDate()+' 日';}
 function greet(){var h=new Date().getHours();return h<5?'夜深了':h<11?'早上好':h<14?'中午好':h<18?'下午好':'晚上好';}
 function nowMin(){var d=new Date();return d.getHours()*60+d.getMinutes();}
-function tmin(t){if(!t)return 99999;var p=t.split(':');return (+p[0])*60+(+p[1]);}
+function tmin(t){if(!t)return 99999;var m=(''+t).match(/(\d{1,2}):(\d{2})/);return m?(+m[1])*60+(+m[2]):50000;}
 function dkey(){var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
 
 /* ============================ 今日 feed ============================ */
@@ -313,10 +313,10 @@ function infoBox(d){
   var fh=d.fields.map(function(f){return '<span class="f'+(f.miss?' miss':'')+'">'+f.k+(f.v?' '+f.v:' ？')+'</span>';}).join('');
   var h='<div class="info"><div class="echo">⌨️「'+d.raw+'」</div><div class="ibody"><span class="rawp">🔒 原话已存</span>';
   h+='<div class="ilbl">识别为</div>'+chip(d.domain)+' '+bchip(d.kind);
-  h+='<div class="ilbl">关键字段（'+BLK[d.kind].n+'带的）</div><div class="fields">'+fh+'</div>';
+  h+='<div class="ilbl">关键字段（点开补全 ✎）</div><div class="fields" onclick="openCompleteSheet()">'+fh+'</div>';
   h+='<div class="ilbl">置信度 '+d.conf+'%</div><div class="bar"><i style="width:'+d.conf+'%;background:'+(hi?'#2f9e77':'#e0a53a')+'"></i></div>';
   h+='<div class="verdict '+(hi?'hi':'lo')+'">'+(hi?'✓ 高置信 · 建议直接落（可撤销）':'⚠ 拿不准/缺字段 → 补全，或先放待办箱（原话早存了）')+'</div>';
-  h+='<div class="acts"><button class="pri" onclick="landDraft(0)">✓ 落地</button><button onclick="landDraft(1)">🗂 待办箱</button><button onclick="draft=null;render()">改</button></div>';
+  h+='<div class="acts"><button class="pri" onclick="openCompleteSheet()">✓ 补全并落地</button><button onclick="landDraft(1)">🗂 待办箱</button><button onclick="editRaw()">改原话</button></div>';
   return h+'</div></div>';
 }
 function landDraft(box){
@@ -333,6 +333,35 @@ function landDraft(box){
   toast(box?'🗂 已放待办箱（晚上 review 定时间）':'✓ 已加到今天',function(){});
   go(box?'review':'today');
 }
+var cd=null;
+function openCompleteSheet(reset){var d=draft;if(!d)return;
+  if(reset===undefined||!cd)cd={title:d.name,domain:d.domain,kind:d.kind,who:DB.facts.me,time:'',budget:(d.fields[0]&&!d.fields[0].miss&&d.fields[0].v)||'',cadence:'每天 20:00',note:d.raw};
+  var h='<h3>补全并落地</h3><div class="hint">AI 先猜好了，你改对再落——原话「'+d.raw+'」已存 🔒</div>';
+  h+='<div class="field"><label>这是什么（可改）</label><input value="'+cd.title+'" oninput="cd.title=this.value"></div>';
+  h+='<div class="field"><label>领域</label><div class="seg">'+Object.keys(DOMAINS).filter(function(k){return k!='fin';}).map(function(k){return '<button class="'+(k==cd.domain?'sel':'')+'" onclick="pickCd(this,\'domain\',\''+k+'\')">'+DOMAINS[k].name+'</button>';}).join('')+'</div></div>';
+  h+='<div class="field"><label>类型</label><div class="seg">'+[['task','④任务'],['cycle','③循环打卡'],['refl','⑥反思']].map(function(o){return '<button class="'+(o[0]==cd.kind?'sel':'')+'" onclick="pickCd(this,\'kind\',\''+o[0]+'\')">'+o[1]+'</button>';}).join('')+'</div></div>';
+  if(cd.kind=='task'){
+    h+='<div class="field"><label>负责人</label><div class="seg">'+DB.facts.members.concat(['待定']).map(function(m){return '<button class="'+(m==cd.who?'sel':'')+'" onclick="pickCd(this,\'who\',\''+m+'\')">'+(m==DB.facts.me?m+'(你)':m)+'</button>';}).join('')+'</div></div>';
+    h+='<div class="field"><label>时间（HH:MM，留空=进待办箱待安排）</label><input value="'+cd.time+'" placeholder="如 18:30" oninput="cd.time=this.value"></div>';
+    h+='<div class="field"><label>预算（可选）</label><input value="'+cd.budget+'" placeholder="$" oninput="cd.budget=this.value"></div>';
+  }else if(cd.kind=='cycle'){
+    h+='<div class="field"><label>节奏</label><input value="'+cd.cadence+'" oninput="cd.cadence=this.value"></div>';
+    h+='<div class="field"><label>值班</label><div class="seg">'+DB.facts.members.map(function(m){return '<button class="'+(m==cd.who?'sel':'')+'" onclick="pickCd(this,\'who\',\''+m+'\')">'+m+'</button>';}).join('')+'</div></div>';
+  }else{
+    h+='<div class="field"><label>反思内容（可改）</label><textarea oninput="cd.note=this.value">'+(cd.note||d.raw)+'</textarea></div>';
+  }
+  h+='<button class="fullbtn" onclick="landComplete()">✓ 落地</button>';
+  openSheet(h);
+}
+function pickCd(el,k,v){cd[k]=v;if(k=='kind'){openCompleteSheet(false);return;}[].forEach.call(el.parentNode.children,function(b){b.className='';});el.className='sel';}
+function landComplete(){var d=draft;var title=cd.title||d.name;var k=cd.kind;
+  if(k=='cycle'){var tm=(cd.cadence.match(/\d{1,2}:\d{2}/)||['20:00'])[0];DB.routines.push({id:uid(),name:title,domain:cd.domain,icon:DOMAINS[cd.domain].icon,risk:'中',schedule:[tm],rotation:[cd.who||DB.facts.me],fields:[{key:'note',label:'备注',type:'text'}],source:'① 随手记',records:[]});}
+  else if(k=='refl'){DB.refls.unshift({id:uid(),text:title,note:cd.note||d.raw,count:1,arch:false});}
+  else{var t=(cd.time||'').match(/\d{1,2}:\d{2}/);DB.items.push({id:uid(),kind:'task',title:title,domain:cd.domain,time:t?t[0]:'',who:cd.who=='待定'?'':(cd.who||''),box:!t,budget:cd.budget||'',done:false,from:'①随手记'});}
+  if(DB.captures[0])DB.captures[0].landed=(k=='task'&&!(cd.time||'').match(/\d{1,2}:\d{2}/))?'':'今天';
+  draft=null;cd=null;save();closeSheet();toast('✓ 已落地：'+title,function(){});go(k=='refl'?'journal':'today');
+}
+function editRaw(){var d=draft;draft=null;render();var el=document.getElementById('cap');if(el){el.value=d.raw;el.focus();}}
 
 /* ============================ 屏幕：review ============================ */
 function reviewScreen(){
