@@ -82,18 +82,18 @@ function load(){try{return JSON.parse(localStorage.getItem(KEY))||seed();}catch(
 function save(){localStorage.setItem(KEY,JSON.stringify(DB));}
 function uid(){return 'x'+(DB._n=(DB._n||0)+1)+'_'+(''+Math.abs(Math.sin(DB._n))).slice(2,7);}
 function seed(){return {_n:0,items:[
-  {id:'s1',kind:'checkin',title:'遛狗',domain:'家庭',dm:'c3',time:'07:00',done:false,who:'妈妈·于棣跟进'},
-  {id:'s2',kind:'task',title:'约移民律师',domain:'成长',dm:'c4',time:'09:00',done:false,who:'于棣·来自三年回国'},
-  {id:'s3',kind:'checkin',title:'数胎动',domain:'宝宝',dm:'c3',time:'20:00',done:false,who:'Tina'},
-  {id:'s4',kind:'task',title:'买婴儿床垫',domain:'宝宝',dm:'c4',time:'',done:false,who:'待安排',box:true}
+  {id:'s1',kind:'checkin',title:'遛狗',domain:'家庭',dm:'c3',time:'07:00',done:false,who:'家人轮流'},
+  {id:'s2',kind:'task',title:'交电费',domain:'生活',dm:'c4',time:'09:00',done:false,who:'待认领'},
+  {id:'s3',kind:'checkin',title:'喝够 8 杯水',domain:'家庭',dm:'c3',time:'20:00',done:false,who:'自己'},
+  {id:'s4',kind:'task',title:'买空气净化器',domain:'家庭',dm:'c4',time:'',done:false,who:'待安排',box:true}
 ],
-plans:[{id:'p1',title:'三年回国',prog:33,ms:[
-  {n:'确定签证类别',m:'已达成 · 2026-06',s:'done'},
-  {n:'备齐推荐信+材料',m:'进行中 · 目标 2026-12',s:'now'},
-  {n:'递交申请',m:'目标 2027 Q2 · 该动手日 1月初',s:'todo'},
-  {n:'搬家+落户',m:'目标 2029 Q2',s:'todo'}
+plans:[{id:'p1',title:'存 3 个月应急金',prog:33,ms:[
+  {n:'定每月存多少',m:'已达成 · 2026-06',s:'done'},
+  {n:'开自动转账',m:'进行中 · 目标 2026-09',s:'now'},
+  {n:'存满第 1 个月',m:'目标 2026-11',s:'todo'},
+  {n:'存满 3 个月',m:'目标 2027 Q1',s:'todo'}
 ]}],
-reflections:[{id:'r1',title:'又对 Tina 没耐心了',body:'她累时我在刷手机。下次先放下手机。',n:3}],
+reflections:[{id:'r1',title:'睡前又刷手机太久了',body:'明明困了还刷。下次手机放客厅充电。',n:3}],
 reminders:[]};}
 var DB=load();
 
@@ -142,7 +142,7 @@ function todayView(){
   var todo=DB.items.filter(function(i){return !i.done && !i.box;});
   var box=DB.items.filter(function(i){return i.box && !i.done;});
   var done=DB.items.filter(function(i){return i.done;});
-  var h='<div class="head"><div class="hi">晚上好，于棣</div><div class="date">'+today()+' · 多云 22°</div>'+
+  var h='<div class="head"><div class="hi">晚上好 🌿</div><div class="date">'+today()+' · 多云 22°</div>'+
     '<div class="glance">今天 <b>'+todo.length+'</b> 件要做 · 待办箱 <b>'+box.length+'</b> 条 · 晚 9:00 <b>复盘</b></div></div><main>';
   h+='<div class="sec">今天要做</div>';
   if(!todo.length)h+='<div class="empty">今天空了 🌿<br>点右下 ＋ 记一笔</div>';
@@ -198,13 +198,13 @@ function renderDraft(p){
 function landDraft(box){
   if(!draft)return;var p=draft;
   if(p.kind==='reflection'){DB.reflections.unshift({id:uid(),title:p.title,body:p.raw,n:1});save();toast('🪞 已存进反思');go('me');clearDraft();return;}
-  var it={id:uid(),kind:p.kind,title:p.title,domain:p.domain,dm:p.dm||'c4',time:box?'':p.time,done:false,who:'于棣',box:!!box,raw:p.raw};
+  var it={id:uid(),kind:p.kind,title:p.title,domain:p.domain,dm:p.dm||'c4',time:box?'':p.time,done:false,who:'我',box:!!box,raw:p.raw};
   DB.items.unshift(it);save();pushReminder(it);
   toast(box?'🗂 已放待办箱（晚上 review 定时间）':'✓ 已加到今天'+(it.time?'：'+it.time:''),function(){DB.items=DB.items.filter(function(x){return x.id!==it.id;});save();});
   clearDraft();go('today');
 }
 function clearDraft(){draft=null;var r=document.getElementById('result');if(r)r.innerHTML='';}
-function quickQ(){var t=(document.getElementById('cap')||{}).value||'';document.getElementById('result').innerHTML='<div class="info"><div class="echo">💬 你问：'+(t||'…')+'</div><div class="ib" style="font-size:13px;color:var(--muted);line-height:1.6">（v0：真 AI 接上后这里直接回答、不落库。）本周产检 1 次 · 周四 10:00。</div></div>';}
+function quickQ(){var t=(document.getElementById('cap')||{}).value||'';document.getElementById('result').innerHTML='<div class="info"><div class="echo">💬 你问：'+(t||'…')+'</div><div class="ib" style="font-size:13px;color:var(--muted);line-height:1.6">（v0：真 AI 接上后这里直接回答、不落库。）本周待办 3 件 · 周四 10:00 有约。</div></div>';}
 
 function reviewView(){
   var pend=DB.items.filter(function(i){return !i.done;});
