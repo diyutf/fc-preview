@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>③ 周期与轮值</title>
+<style>
+  :root{
+    --green:#065f06; --blue:#06b6d4; --dot:#84cc16;
+    --bg:#f3f5f4; --card:#fff; --text:#1d2620; --muted:#7d8a82;
+    --line:#e7ecea; --btn:#065f06; --danger:#c0392b;
+    --shadow:0 1px 2px rgba(0,0,0,.05),0 6px 18px rgba(0,0,0,.05);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",Arial,sans-serif;
+    font-size:16px;line-height:1.45;overflow-x:hidden}
+  #app{max-width:460px;margin:0 auto;min-height:100vh;padding-bottom:40px}
+  .head{position:sticky;top:0;z-index:5;background:var(--green);color:#fff;
+    padding:calc(env(safe-area-inset-top) + 14px) 16px 14px;box-shadow:var(--shadow)}
+  .head .row{display:flex;align-items:center;gap:10px}
+  .back{font-size:15px;color:#cfe9d9;padding:6px 4px;min-height:32px;display:flex;align-items:center}
+  .head h1{font-size:19px;margin:0;font-weight:800;flex:1}
+  .head .sub{font-size:12.5px;color:#bfe2d0;margin-top:3px}
+  main{padding:14px 14px 0}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:var(--shadow)}
+  .sec{font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.04em;margin:16px 2px 8px;text-transform:uppercase}
+  .empty{text-align:center;color:var(--muted);padding:34px 18px;font-size:14px;line-height:1.7}
+  .empty .big{font-size:34px;display:block;margin-bottom:8px}
+  label.fl{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin:12px 2px 6px}
+  input,select,textarea{width:100%;font-size:16px;font-family:inherit;color:var(--text);
+    background:#f7f9f8;border:1px solid var(--line);border-radius:12px;padding:12px 13px;outline:none}
+  input:focus,select,textarea:focus{border-color:var(--green)}
+  input[type=time]{-webkit-appearance:none}
+  .btn{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;
+    background:var(--btn);color:#fff;border:0;border-radius:13px;padding:14px;font-size:16px;
+    font-weight:800;min-height:50px;cursor:pointer}
+  .btn.ghost{background:#eef2f0;color:var(--text)}
+  .btn.line{background:#fff;color:var(--green);border:1.5px solid var(--green)}
+  .btn.sm{padding:10px 14px;min-height:44px;font-size:14px;width:auto}
+  .btn.danger{background:#fdeceb;color:var(--danger)}
+  .fab{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 18px);
+    max-width:432px;width:calc(100% - 28px);z-index:8}
+  .row2{display:flex;gap:9px}
+  .row2>*{flex:1}
+  .chiprow{display:flex;flex-wrap:wrap;gap:8px}
+  .day{flex:0 0 auto;min-width:42px;text-align:center;padding:9px 0;border-radius:11px;border:1.5px solid var(--line);
+    background:#fff;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;user-select:none}
+  .day.on{background:var(--green);color:#fff;border-color:var(--green)}
+  .pill{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:20px;border:1.5px solid var(--line);
+    background:#fff;font-size:13.5px;font-weight:700;color:var(--muted);cursor:pointer}
+  .pill.on{background:var(--green);color:#fff;border-color:var(--green)}
+  .memrow,.slotrow,.fieldrow{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--line)}
+  .memrow:first-child,.slotrow:first-child,.fieldrow:first-child{border-top:0}
+  .memrow .nm{flex:1;font-size:15px;font-weight:600}
+  .av{width:34px;height:34px;border-radius:50%;background:var(--green);color:#fff;display:flex;
+    align-items:center;justify-content:center;font-size:14px;font-weight:800;flex:none}
+  .x{color:var(--danger);font-size:20px;padding:4px 8px;cursor:pointer;line-height:1}
+  .item{display:flex;align-items:center;gap:12px;cursor:pointer}
+  .item .bd{flex:1;min-width:0}
+  .item .t{font-size:15.5px;font-weight:700}
+  .item .m{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .go{color:var(--muted);font-size:22px}
+  .tag{display:inline-block;font-size:11px;font-weight:800;padding:2px 8px;border-radius:8px;background:#eaf3ee;color:var(--green)}
+  .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;text-align:center;margin-top:6px}
+  .grid .hd{font-size:10px;color:var(--muted);font-weight:800}
+  .grid .cell{border-radius:9px;padding:7px 2px;font-size:11px;font-weight:700;background:#f4f6fa;color:var(--text);min-height:44px;display:flex;flex-direction:column;justify-content:center;gap:2px}
+  .grid .cell.off{opacity:.35}
+  .grid .cell b{font-size:12px}
+  .grid .cell .wh{font-size:10px;color:var(--green);font-weight:800}
+  .ci{display:flex;align-items:center;gap:11px;padding:12px 0;border-top:1px solid var(--line)}
+  .ci:first-child{border-top:0}
+  .ci .tm{font-variant-numeric:tabular-nums;font-weight:800;font-size:15px;width:52px;flex:none}
+  .ci .who{flex:1;font-size:14px}
+  .ci .who small{color:var(--muted);display:block;font-size:11.5px}
+  .ck{width:30px;height:30px;border-radius:50%;border:2px solid var(--line);flex:none;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;background:#fff}
+  .ck.done{background:var(--green);border-color:var(--green)}
+  .rec{display:flex;gap:8px;font-size:12.5px;color:var(--muted);padding:7px 0;border-top:1px dashed var(--line)}
+  .rec b{color:var(--text)}
+  .mask{position:fixed;inset:0;background:rgba(20,28,24,.42);z-index:20;display:none;align-items:flex-end}
+  .mask.show{display:flex}
+  .sheet{background:#fff;width:100%;max-width:460px;margin:0 auto;border-radius:22px 22px 0 0;padding:18px 16px calc(env(safe-area-inset-bottom) + 18px);max-height:88vh;overflow:auto}
+  .sheet h3{margin:2px 0 4px;font-size:17px}
+  .sheet .hint{font-size:12.5px;color:var(--muted);margin-bottom:6px}
+  .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1d2620;color:#fff;
+    padding:11px 18px;border-radius:22px;font-size:13.5px;z-index:40;opacity:0;transition:.2s;pointer-events:none;white-space:nowrap}
+  .toast.show{opacity:1}
+  .seg{display:flex;background:#eef2f0;border-radius:12px;padding:3px;gap:3px}
+  .seg button{flex:1;border:0;background:none;padding:10px;border-radius:9px;font-size:13.5px;font-weight:700;color:var(--muted);min-height:40px}
+  .seg button.sel{background:#fff;color:var(--green);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+  .muted{color:var(--muted);font-size:12.5px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="mask" id="mask" onclick="if(event.target===this)closeSheet()"><div class="sheet" id="sheet"></div></div>
+<div class="toast" id="toast"></div>
+<script>
+/* ================= 存储（本机 localStorage，开局全空） ================= */
+var KEY='td_rot_v1';
+function load(){try{var s=localStorage.getItem(KEY);if(s)return JSON.parse(s);}catch(e){}return {members:[],routines:[]};}
+function save(){localStorage.setItem(KEY,JSON.stringify(DB));}
+var DB=load();
+function uid(){return 'x'+Math.random().toString(36).slice(2,9);}
+var WD=['日','一','二','三','四','五','六'];
+function todayKey(){var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
+function todayDow(){return new Date().getDay();}
+function mem(id){for(var i=0;i<DB.members.length;i++)if(DB.members[i].id==id)return DB.members[i];return null;}
+function memName(id){var m=mem(id);return m?m.name:'—';}
+function initial(n){return (n||'?').trim().slice(0,1);}
+function rt(id){for(var i=0;i<DB.routines.length;i++)if(DB.routines[i].id==id)return DB.routines[i];return null;}
+
+/* ================= 路由 ================= */
+var view={name:'home',id:null};
+function go(name,id){view={name:name,id:id||null};render();window.scrollTo(0,0);}
+function esc(s){return (s==null?'':''+s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function render(){
+  var el=document.getElementById('app');
+  var v=view.name;
+  if(v=='home')el.innerHTML=homeScreen();
+  else if(v=='members')el.innerHTML=membersScreen();
+  else if(v=='edit')el.innerHTML=editScreen(view.id);
+  else if(v=='detail')el.innerHTML=detailScreen(view.id);
+  else el.innerHTML=homeScreen();
+}
+
+/* ================= 首页：轮值列表 ================= */
+function homeScreen(){
+  var h='<div class="head"><div class="row"><h1>③ 周期与轮值</h1></div><div class="sub">你自己建 · 存本机 · 开局是空的</div></div><main>';
+  h+='<div class="card item" onclick="go(\'members\')"><div class="av" style="background:var(--blue)">👥</div><div class="bd"><div class="t">家庭成员</div><div class="m">'+(DB.members.length?DB.members.map(function(m){return esc(m.name);}).join(' · '):'还没添加 · 先加人')+'</div></div><div class="go">›</div></div>';
+  h+='<div class="sec">我的轮值事务（'+DB.routines.length+'）</div>';
+  if(!DB.routines.length){
+    h+='<div class="card empty"><span class="big">🗓</span>还没有任何轮值。<br>点下面「＋ 新建轮值」，自己设：谁、每天几次、几点。</div>';
+  }else{
+    DB.routines.forEach(function(r){
+      var slots=r.slots.length, ppl=r.roster.length;
+      var modeTxt=r.mode=='each'?('每人每天 '+slots+' 次'):('轮值 · 每天 '+slots+' 次');
+      h+='<div class="card item" onclick="go(\'detail\',\''+r.id+'\')"><div class="av">'+esc(r.icon||'🔁')+'</div><div class="bd"><div class="t">'+esc(r.name)+'</div><div class="m">'+ppl+' 人 · '+modeTxt+' · '+(r.days.length==7?'每天':r.days.map(function(d){return WD[d];}).join(''))+'</div></div><div class="go">›</div></div>';
+    });
+  }
+  h+='<div style="height:80px"></div></main>';
+  h+='<div class="fab"><button class="btn" onclick="newRoutine()">＋ 新建轮值</button></div>';
+  return h;
+}
+
+/* ================= 成员管理 ================= */
+function membersScreen(){
+  var h='<div class="head"><div class="row"><div class="back" onclick="go(\'home\')">‹ 返回</div></div><h1 style="margin-top:6px">家庭成员</h1><div class="sub">加了人才能排班 · 随时删</div></div><main>';
+  h+='<div class="card"><label class="fl">加一个人</label><div class="row2"><input id="mname" placeholder="名字，如 爸爸 / 阿姨" onkeydown="if(event.key===\'Enter\')addMember()"><button class="btn sm" style="flex:0 0 84px" onclick="addMember()">＋ 加</button></div></div>';
+  if(!DB.members.length){h+='<div class="card empty"><span class="big">👥</span>还没有成员。上面输名字，点「加」。</div>';}
+  else{
+    h+='<div class="card">';
+    DB.members.forEach(function(m){
+      h+='<div class="memrow"><div class="av">'+esc(initial(m.name))+'</div><div class="nm">'+esc(m.name)+'</div><div class="x" onclick="delMember(\''+m.id+'\')">✕</div></div>';
+    });
+    h+='</div>';
+  }
+  h+='<div style="height:20px"></div></main>';
+  return h;
+}
+function addMember(){
+  var el=document.getElementById('mname');var n=(el.value||'').trim();
+  if(!n){toast('先输个名字');return;}
+  DB.members.push({id:uid(),name:n});save();el.value='';render();
+  setTimeout(function(){var i=document.getElementById('mname');if(i)i.focus();},30);
+}
+function delMember(id){
+  DB.members=DB.members.filter(function(m){return m.id!=id;});
+  DB.routines.forEach(function(r){r.roster=r.roster.filter(function(x){return x!=id;});
+    for(var k in r.slotAssign)if(r.slotAssign[k]==id)r.slotAssign[k]='';});
+  save();render();
+}
+
+/* ================= 新建 / 编辑轮值 ================= */
+var RF=null;
+function newRoutine(){
+  if(!DB.members.length){toast('先去加人 →');go('members');return;}
+  RF={id:uid(),isNew:true,name:'',icon:'🔁',days:[0,1,2,3,4,5,6],
+    slots:[{id:uid(),time:'09:00',label:''}],roster:[],mode:'each',slotAssign:{},
+    fields:[],records:[]};
+  go('edit',null);
+}
+function editRoutine(id){
+  var r=rt(id);if(!r)return;
+  RF=JSON.parse(JSON.stringify(r));RF.isNew=false;
+  go('edit',null);
+}
+function editScreen(){
+  var f=RF;if(!f)return go('home');
+  var icons=['🔁','🍼','💊','🐕','🍚','🧹','🌱','🧾','💧','📞','🛁','🌙'];
+  var h='<div class="head"><div class="row"><div class="back" onclick="go(\'home\')">‹ 取消</div></div><h1 style="margin-top:6px">'+(f.isNew?'新建轮值':'编辑轮值')+'</h1><div class="sub">全你自己填 · 存本机</div></div><main>';
+
+  h+='<div class="card"><label class="fl">这件事叫什么</label>';
+  h+='<input id="rn" value="'+esc(f.name)+'" placeholder="如 喂奶 / 遛狗 / 量血压" oninput="RF.name=this.value">';
+  h+='<label class="fl">图标</label><div class="chiprow">'+icons.map(function(ic){return '<div class="pill '+(ic==f.icon?'on':'')+'" onclick="RF.icon=\''+ic+'\';render()">'+ic+'</div>';}).join('')+'</div></div>';
+
+  h+='<div class="card"><label class="fl">哪几天</label><div class="chiprow">';
+  for(var d=0;d<7;d++)h+='<div class="day '+(f.days.indexOf(d)>=0?'on':'')+'" onclick="toggleDay('+d+')">'+WD[d]+'</div>';
+  h+='<div class="pill sm" style="margin-left:auto" onclick="setDays(\'all\')">每天</div><div class="pill sm" onclick="setDays(\'none\')">清空</div>';
+  h+='</div></div>';
+
+  h+='<div class="card"><label class="fl">每天打卡几次 / 几点（这就是"一天四五次"）</label>';
+  f.slots.forEach(function(s,i){
+    h+='<div class="slotrow"><input type="time" style="flex:0 0 118px" value="'+esc(s.time)+'" onchange="RF.slots['+i+'].time=this.value"><input placeholder="备注(可空)，如 早/午/晚" value="'+esc(s.label)+'" oninput="RF.slots['+i+'].label=this.value">'+(f.slots.length>1?'<div class="x" onclick="delSlot('+i+')">✕</div>':'')+'</div>';
+  });
+  h+='<div style="margin-top:10px"><button class="btn line sm" onclick="addSlot()">＋ 加一次打卡时间</button></div></div>';
+
+  h+='<div class="card"><label class="fl">谁来做（勾选，可多选）</label>';
+  if(!DB.members.length)h+='<div class="muted">还没成员 · <a onclick="go(\'members\')" style="color:var(--green);font-weight:700">去加人</a></div>';
+  DB.members.forEach(function(m){
+    var on=f.roster.indexOf(m.id)>=0;
+    h+='<div class="memrow" onclick="toggleRoster(\''+m.id+'\')"><div class="ck '+(on?'done':'')+'">'+(on?'✓':'')+'</div><div class="av">'+esc(initial(m.name))+'</div><div class="nm">'+esc(m.name)+'</div></div>';
+  });
+  h+='</div>';
+
+  h+='<div class="card"><label class="fl">怎么分</label><div class="seg">'+
+     '<button class="'+(f.mode=='each'?'sel':'')+'" onclick="RF.mode=\'each\';render()">每人都打</button>'+
+     '<button class="'+(f.mode=='rotate'?'sel':'')+'" onclick="RF.mode=\'rotate\';render()">轮流值班</button></div>';
+  h+='<div class="muted" style="margin-top:8px">'+(f.mode=='each'?'勾选的每个人，每天在上面每个时间点各打一次卡（5 人 × 5 次 = 25 次/天）。':'每天只有一个人值班，按勾选顺序一天换一个人，值班人当天打完所有时间点。')+'</div></div>';
+
+  if(f.fields.length||true){
+    h+='<div class="card"><label class="fl">每次打卡要记什么（可选）</label>';
+    if(!f.fields.length)h+='<div class="muted" style="margin-bottom:6px">不加也行 → 打卡就是打个勾。加了 → 打卡时让你填。</div>';
+    f.fields.forEach(function(fd,i){
+      h+='<div class="fieldrow"><input style="flex:1" value="'+esc(fd.label)+'" placeholder="字段名，如 奶量ml / 备注" oninput="RF.fields['+i+'].label=this.value"><select style="flex:0 0 96px" onchange="RF.fields['+i+'].type=this.value"><option value="text"'+(fd.type=='text'?' selected':'')+'>文字</option><option value="num"'+(fd.type=='num'?' selected':'')+'>数字</option></select><div class="x" onclick="delField('+i+')">✕</div></div>';
+    });
+    h+='<div style="margin-top:10px"><button class="btn line sm" onclick="addField()">＋ 加记录字段</button></div></div>';
+  }
+
+  h+='<div style="height:90px"></div></main>';
+  h+='<div class="fab"><div class="row2">'+(f.isNew?'':'<button class="btn danger" style="flex:0 0 96px" onclick="delRoutine()">删除</button>')+'<button class="btn" onclick="saveRoutine()">保存</button></div></div>';
+  return h;
+}
+function toggleDay(d){var i=RF.days.indexOf(d);if(i>=0)RF.days.splice(i,1);else RF.days.push(d);RF.days.sort();render();}
+function setDays(w){RF.days=w=='all'?[0,1,2,3,4,5,6]:[];render();}
+function addSlot(){RF.slots.push({id:uid(),time:'12:00',label:''});render();}
+function delSlot(i){var s=RF.slots[i];delete RF.slotAssign[s.id];RF.slots.splice(i,1);render();}
+function toggleRoster(id){var i=RF.roster.indexOf(id);if(i>=0)RF.roster.splice(i,1);else RF.roster.push(id);render();}
+function addField(){RF.fields.push({id:uid(),label:'',type:'text'});render();}
+function delField(i){RF.fields.splice(i,1);render();}
+function saveRoutine(){
+  var f=RF;
+  if(!(f.name||'').trim()){toast('给这件事起个名');return;}
+  if(!f.roster.length){toast('至少勾一个人');return;}
+  if(!f.days.length){toast('至少选一天');return;}
+  f.fields=f.fields.filter(function(x){return (x.label||'').trim();});
+  var clean={id:f.id,name:f.name.trim(),icon:f.icon,days:f.days,slots:f.slots,roster:f.roster,mode:f.mode,slotAssign:f.slotAssign||{},fields:f.fields,records:f.records||[]};
+  var ex=rt(f.id);
+  if(ex){for(var k in clean)ex[k]=clean[k];}else{DB.routines.push(clean);}
+  save();RF=null;toast('✓ 存好了');go('detail',clean.id);
+}
+function delRoutine(){
+  if(!confirm('删掉这个轮值？记录也一起没。')){return;}
+  DB.routines=DB.routines.filter(function(r){return r.id!=RF.id;});save();RF=null;go('home');
+}
+
+/* ================= 轮值详情 + 打卡 ================= */
+function dutyPerson(r){ // rotate 模式：今天谁值班
+  if(!r.roster.length)return null;
+  var epoch=Math.floor(Date.now()/86400000);
+  return r.roster[epoch % r.roster.length];
+}
+function detailScreen(id){
+  var r=rt(id);if(!r)return go('home');
+  var activeToday=r.days.indexOf(todayDow())>=0;
+  var h='<div class="head"><div class="row"><div class="back" onclick="go(\'home\')">‹ 返回</div></div><h1 style="margin-top:6px">'+esc(r.icon)+' '+esc(r.name)+'</h1><div class="sub">'+(r.mode=='each'?'每人每天 '+r.slots.length+' 次':'轮流值班 · 每天 '+r.slots.length+' 次')+' · '+(r.days.length==7?'每天':r.days.map(function(d){return WD[d];}).join(''))+'</div></div><main>';
+
+  // 概览卡
+  h+='<div class="card"><div class="item" style="cursor:default"><div class="bd"><div class="t" style="font-size:14px">参与：'+r.roster.map(function(x){return esc(memName(x));}).join(' · ')+'</div><div class="m">时间点：'+r.slots.map(function(s){return s.time;}).join(' / ')+'</div></div><button class="btn sm ghost" onclick="editRoutine(\''+r.id+'\')">编辑</button></div></div>';
+
+  // 本周表
+  h+='<div class="sec">本周</div><div class="card"><div class="grid">';
+  WD.forEach(function(w){h+='<div class="hd">'+w+'</div>';});
+  var todayD=todayDow();
+  for(var d=0;d<7;d++){
+    var on=r.days.indexOf(d)>=0;
+    var who='';
+    if(on){
+      if(r.mode=='rotate'){var epoch=Math.floor(Date.now()/86400000)-(todayD-d);var p=r.roster[((epoch%r.roster.length)+r.roster.length)%r.roster.length];who=memName(p);}
+      else who=r.roster.length+' 人';
+    }
+    h+='<div class="cell'+(on?'':' off')+'"'+(d==todayD?' style="outline:2px solid var(--green)"':'')+'><b>'+WD[d]+'</b>'+(on?'<span class="wh">'+esc(who)+'</span><span class="muted" style="font-size:9px">'+r.slots.length+'次</span>':'<span class="muted" style="font-size:10px">休</span>')+'</div>';
+  }
+  h+='</div></div>';
+
+  // 今天打卡
+  h+='<div class="sec">今天打卡'+(activeToday?'':'（今天休息）')+'</div>';
+  if(!activeToday){h+='<div class="card empty">今天不在这件事的排班里。</div>';}
+  else{
+    var cells=todayCells(r);
+    h+='<div class="card">';
+    cells.forEach(function(c){
+      var done=hasRecord(r,c.slotId,c.memberId);
+      h+='<div class="ci"><div class="tm">'+esc(c.time)+'</div><div class="who">'+esc(memName(c.memberId))+(c.label?' <small>'+esc(c.label)+'</small>':'')+'</div><div class="ck '+(done?'done':'')+'" onclick="tapCheck(\''+r.id+'\',\''+c.slotId+'\',\''+c.memberId+'\')">'+(done?'✓':'')+'</div></div>';
+    });
+    h+='</div>';
+    var doneN=cells.filter(function(c){return hasRecord(r,c.slotId,c.memberId);}).length;
+    h+='<div class="muted" style="text-align:center;margin:-4px 0 4px">今天 '+doneN+' / '+cells.length+' 已打</div>';
+  }
+
+  // 记录
+  h+='<div class="sec">打卡记录（'+r.records.length+'）</div><div class="card">';
+  if(!r.records.length)h+='<div class="muted">还没有记录。上面点圈打卡。</div>';
+  var recs=r.records.slice().sort(function(a,b){return b.ts-a.ts;}).slice(0,40);
+  recs.forEach(function(rec){
+    var vals='';for(var k in (rec.values||{}))if(rec.values[k]!=='')vals+=' · '+esc(rec.values[k]);
+    h+='<div class="rec"><b>'+esc(rec.dateStr)+' '+esc(rec.time)+'</b><span>'+esc(memName(rec.memberId))+vals+'</span><span style="margin-left:auto" class="x" onclick="delRecord(\''+r.id+'\',\''+rec.id+'\')">✕</span></div>';
+  });
+  h+='</div><div style="height:30px"></div></main>';
+  return h;
+}
+function todayCells(r){
+  var cells=[];
+  if(r.mode=='each'){
+    r.slots.forEach(function(s){r.roster.forEach(function(mid){cells.push({slotId:s.id,memberId:mid,time:s.time,label:s.label});});});
+  }else{
+    var p=dutyPerson(r);
+    r.slots.forEach(function(s){cells.push({slotId:s.id,memberId:p,time:s.time,label:s.label});});
+  }
+  cells.sort(function(a,b){return a.time<b.time?-1:a.time>b.time?1:0;});
+  return cells;
+}
+function hasRecord(r,slotId,memberId){
+  var tk=todayKey();
+  return r.records.some(function(x){return x.dateKey==tk&&x.slotId==slotId&&x.memberId==memberId;});
+}
+function tapCheck(rid,slotId,memberId){
+  var r=rt(rid);if(!r)return;
+  // 已打 → 取消
+  var tk=todayKey();
+  var ex=r.records.filter(function(x){return x.dateKey==tk&&x.slotId==slotId&&x.memberId==memberId;});
+  if(ex.length){r.records=r.records.filter(function(x){return !(x.dateKey==tk&&x.slotId==slotId&&x.memberId==memberId);});save();render();toast('已撤销这次打卡');return;}
+  if(r.fields.length){openCheckin(rid,slotId,memberId);return;}
+  writeRecord(r,slotId,memberId,{});render();toast('✓ 打卡');
+}
+var cf=null;
+function openCheckin(rid,slotId,memberId){
+  var r=rt(rid);cf={rid:rid,slotId:slotId,memberId:memberId,values:{}};
+  var slot=r.slots.filter(function(s){return s.id==slotId;})[0]||{};
+  var h='<h3>'+esc(r.name)+' · 打卡</h3><div class="hint">'+esc(memName(memberId))+' · '+esc(slot.time||'')+'</div>';
+  r.fields.forEach(function(fd){cf.values[fd.id]='';
+    h+='<label class="fl">'+esc(fd.label)+'</label><input '+(fd.type=='num'?'type="number" inputmode="decimal"':'')+' placeholder="'+(fd.type=='num'?'数字':'填一句')+'" oninput="cf.values[\''+fd.id+'\']=this.value">';
+  });
+  h+='<div style="height:12px"></div><button class="btn" onclick="saveCheckin()">✓ 保存打卡</button>';
+  openSheet(h);
+}
+function saveCheckin(){
+  var r=rt(cf.rid);writeRecord(r,cf.slotId,cf.memberId,cf.values);cf=null;closeSheet();render();toast('✓ 打卡已记');
+}
+function writeRecord(r,slotId,memberId,values){
+  var d=new Date();var time=('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
+  r.records.push({id:uid(),dateKey:todayKey(),dateStr:(d.getMonth()+1)+'/'+d.getDate(),time:time,slotId:slotId,memberId:memberId,values:values||{},ts:Date.now()});
+  save();
+}
+function delRecord(rid,recId){var r=rt(rid);r.records=r.records.filter(function(x){return x.id!=recId;});save();render();}
+
+/* ================= 通用 ================= */
+function openSheet(html){document.getElementById('sheet').innerHTML=html;document.getElementById('mask').classList.add('show');}
+function closeSheet(){document.getElementById('mask').classList.remove('show');}
+var tt;
+function toast(m){var el=document.getElementById('toast');el.textContent=m;el.classList.add('show');clearTimeout(tt);tt=setTimeout(function(){el.classList.remove('show');},1800);}
+
+render();
+</script>
+</body>
+</html>
