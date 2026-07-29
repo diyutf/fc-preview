@@ -277,7 +277,8 @@ function planHeadsup(){
 var draft=null;
 function captureScreen(){
   var h='<div class="head"><div class="back" onclick="go(\'today\')">‹ 今日</div><div class="hi">随手记</div><div class="date">说一句 / 粘一段 · AI 帮你归位（原话第一秒就存 🔒）</div></div><main>';
-  h+='<div style="display:flex;gap:7px;margin-bottom:11px">'+[['🎙️ 语音','voice'],['⌨️ 文字','text'],['📥 导入对话','sort'],['📷 拍照','photo']].map(function(o){return '<button style="flex:1;padding:9px 2px;border:1px solid var(--line);background:#fff;border-radius:11px;font-size:11.5px;font-weight:700;color:var(--muted)" onclick="capMode(\''+o[1]+'\')">'+o[0]+'</button>';}).join('')+'</div>';
+  h+='<div style="display:flex;gap:7px;margin-bottom:8px">'+[['🎙️ 语音','voice'],['⌨️ 文字','text'],['📥 导入对话','sort'],['📷 拍照','photo']].map(function(o){return '<button style="flex:1;padding:9px 2px;border:1px solid var(--line);background:#fff;border-radius:11px;font-size:11.5px;font-weight:700;color:var(--muted)" onclick="capMode(\''+o[1]+'\')">'+o[0]+'</button>';}).join('')+'</div>';
+  h+='<div style="font-size:11px;color:var(--muted);line-height:1.5;margin:0 2px 12px">🎤 <b>语音输入</b>：点下面输入框 → 按手机键盘上的<b>话筒 🎤</b>说话（iPhone 自带听写，说完点「让 AI 理解」）。网页版不能自带语音转写，这是苹果的限制。</div>';
   h+='<div class="compose"><div class="mic">🎙️</div><textarea id="cap" placeholder="「宝宝屋买个空气净化器，预算200」 / 「每天晚上8点提醒我数胎动」 / 「这周宝宝几次产检？」"></textarea></div>';
   h+='<button class="send" onclick="parseCapture()">➤ 让 AI 理解</button>';
   if(draft)h+=infoBox(draft);
